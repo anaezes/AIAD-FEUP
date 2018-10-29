@@ -1,16 +1,22 @@
 import jade.core.Agent;
 
+import java.awt.*;
 import java.util.*;
 
 public class World extends Agent {
 
-    private Person[][] terrain;
+    private HashMap<Point, Person> terrain;
     private Integer length;
     private Integer width;
     private Double initialPtr;
     private Integer immigrantsPerDay;
     private Double immigrantChanceCooperateWithSame;
     private Double immigrantChanceCooperateWithDifferent;
+    private Double costOfGiving;
+    private Double gainOfReceiving;
+    private Double mutationRate;
+    private Double deathRate;
+    private Integer tick;
     private Random random;
 
     public World(Random random) {
@@ -25,74 +31,162 @@ public class World extends Agent {
         this.random = random;
         this.length = length;
         this.width = width;
-        terrain = new Person[this.width][this.length];
+        this.terrain = new HashMap<>();
         this.initialPtr = initialPtr;
         this.immigrantsPerDay = immigrantsPerDay;
         this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
         this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
     }
 
-    Person getPerson(Integer x, Integer y) {
-        return terrain[y][x];
+    Person getPerson(Point point) {
+        return terrain.get(this.normalize(point));
     }
 
-    HashSet<Person> getNeighbours(Integer x, Integer y) {
+    public void putPerson(Point point, Person person) {
+        terrain.put(this.normalize(point), person);
+    }
+
+    public HashSet<Person> getNeighbours(Point point) {
         HashSet<Person> neighbours = new HashSet<>();
 
-        if (terrain[y % width][(x + 1) % length] != null) {
-            neighbours.add(terrain[y % width][(x + 1) % length]);
-        } else if (terrain[y % width][(x - 1) % length] != null) {
-            neighbours.add(terrain[y % width][(x - 1) % length]);
-        } else if (terrain[(y + 1) % width][x % length] != null) {
-            neighbours.add(terrain[(y + 1) % width][x % length]);
-        } else if (terrain[(y - 1) % width][x % length] != null) {
-            neighbours.add(terrain[(y - 1) % width][x % length]);
+        int x = (int) point.getX();
+        int y = (int) point.getY();
+
+        Point up = new Point(x, y - 1);
+        Point down = new Point(x, y + 1);
+        Point left = new Point(x - 1, y);
+        Point right = new Point(x + 1, y);
+
+        if (getPerson(up) != null) {
+            neighbours.add(getPerson(up));
+        }
+        if (getPerson(down) != null) {
+            neighbours.add(getPerson(down));
+        }
+        if (getPerson(left) != null) {
+            neighbours.add(getPerson(left));
+        }
+        if (getPerson(right) != null) {
+            neighbours.add(getPerson(right));
         }
 
         return neighbours;
     }
 
-    void putImmigrant() {
+    public void putImmigrant() {
         Person immigrant = randomPerson();
-        int y = random.nextInt(width);
-        int x = random.nextInt(length);
-        while (getPerson(x,y) != null) {
-            y = random.nextInt(width);
+
+        Integer x = random.nextInt(length);
+        Integer y = random.nextInt(width);
+        Point point = new Point(x, y);
+        while (getPerson(point) != null) {
             x = random.nextInt(length);
+            y = random.nextInt(width);
+            point = new Point(x, y);
         }
-        terrain[y][x] = immigrant;
+
+        immigrant.setLocation(new Point(x, y));
+        putPerson(point, immigrant);
     }
 
-    private Person randomPerson() {
-        boolean coopWithSame = false;
-        boolean coopWithDiff = false;
-        Colour colour = Colour.RED;
+    public Person randomPerson() {
+        boolean cooperateWithSame = false;
+        boolean cooperateWithDifferent = false;
+        Colour colour;
+
         double colourValue = random.nextDouble();
 
-        if(colourValue >= 0.25 && colourValue < 0.5){
+        if (colourValue < 0.25) {
+            colour = Colour.RED;
+        } else if (colourValue < 0.5) {
             colour = Colour.GREEN;
-        } else if(colourValue <0.75){
+        } else if (colourValue < 0.75) {
             colour = Colour.BLUE;
-        } else{
+        } else {
             colour = Colour.YELLOW;
         }
 
-        if(random.nextDouble() > 0.5){
-            coopWithSame = true;
+        if (random.nextDouble() < immigrantChanceCooperateWithSame) {
+            cooperateWithSame = true;
         }
-        if(random.nextDouble() > 0.5) {
-            coopWithDiff = true;
+        if (random.nextDouble() < immigrantChanceCooperateWithDifferent) {
+            cooperateWithDifferent = true;
         }
-        return new Person(initialPtr,colour,coopWithSame,coopWithDiff);
+
+        return new Person(initialPtr, colour, cooperateWithSame, cooperateWithDifferent, null);
     }
 
-    private HashSet<Person> getAllPersons(){
-        ArrayList<Person> population = new ArrayList<>();
-        for (int i=0;i<terrain.length;i++){
-            population.addAll(Arrays.asList(terrain[i]));
-        }
-        System.out.println("Before shuffle:" + population);
-        Collections.shuffle(population,random);
-        System.out.println("After shuffle:" + population);
+    public ArrayList<Person> getRandomPopulation() {
+        ArrayList<Person> population = new ArrayList<>(terrain.values());
+        Collections.shuffle(population, random);
+        return population;
     }
+
+    public Point normalize(Point point) {
+        int x = (int) point.getX() % this.length;
+        int y = (int) point.getY() % this.width;
+        return new Point(x, y);
+    }
+
+    public void tick() {
+        // Stage 1: place immigrants
+        for (int i = 0; i < immigrantsPerDay; i++) {
+            putImmigrant();
+        }
+
+        // Stage 2: Help others (or not)
+
+
+        // Stage 3: Reproduce
+        for (Person person : getRandomPopulation()) {
+            ArrayList<Point> emptySites = getEmptyAdjacentSites(person.getLocation());
+            if (emptySites.isEmpty()) {
+                continue;
+            }
+            Person child = person.reproduce(mutationRate, random);
+            if (child != null) {
+                Point location = emptySites.iterator().next();
+                child.setPtr(initialPtr);
+                child.setLocation(location);
+                putPerson(location, child);
+            }
+        }
+
+        // Stage 4: Die :-(
+        for (Person person : terrain.values()) {
+            if (random.nextDouble() < deathRate) {
+                terrain.values().remove(person); // rest in peace sweet prince
+            }
+        }
+    }
+
+    public ArrayList<Point> getEmptyAdjacentSites(Point location) {
+        ArrayList<Point> emptySites = new ArrayList<>();
+
+        int x = (int) location.getX();
+        int y = (int) location.getY();
+
+        Point up = new Point(x, y - 1);
+        Point down = new Point(x, y + 1);
+        Point left = new Point(x - 1, y);
+        Point right = new Point(x + 1, y);
+
+        if (getPerson(up) == null) {
+            emptySites.add(up);
+        }
+        if (getPerson(down) == null) {
+            emptySites.add(down);
+        }
+        if (getPerson(left) == null) {
+            emptySites.add(left);
+        }
+        if (getPerson(right) == null) {
+            emptySites.add(right);
+        }
+
+        Collections.shuffle(emptySites, random);
+
+        return emptySites;
+    }
+
 }
