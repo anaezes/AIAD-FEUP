@@ -155,7 +155,7 @@ public class World extends Agent {
         // Stage 4: Die :-(
         for (Person person : terrain.values()) {
             if (random.nextDouble() < deathRate) {
-                terrain.values().remove(person); // rest in peace sweet prince
+                terrain.remove(person.getLocation()); // rest in peace sweet prince
             }
         }
     }
