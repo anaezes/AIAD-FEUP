@@ -1,7 +1,6 @@
 import jade.core.Agent;
 
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 
 public class World extends Agent {
 
@@ -54,7 +53,46 @@ public class World extends Agent {
     }
 
     void putImmigrant() {
-
+        Person immigrant = randomPerson();
+        int y = random.nextInt(width);
+        int x = random.nextInt(length);
+        while (getPerson(x,y) != null) {
+            y = random.nextInt(width);
+            x = random.nextInt(length);
+        }
+        terrain[y][x] = immigrant;
     }
 
+    private Person randomPerson() {
+        boolean coopWithSame = false;
+        boolean coopWithDiff = false;
+        Colour colour = Colour.RED;
+        double colourValue = random.nextDouble();
+
+        if(colourValue >= 0.25 && colourValue < 0.5){
+            colour = Colour.GREEN;
+        } else if(colourValue <0.75){
+            colour = Colour.BLUE;
+        } else{
+            colour = Colour.YELLOW;
+        }
+
+        if(random.nextDouble() > 0.5){
+            coopWithSame = true;
+        }
+        if(random.nextDouble() > 0.5) {
+            coopWithDiff = true;
+        }
+        return new Person(initialPtr,colour,coopWithSame,coopWithDiff);
+    }
+
+    private HashSet<Person> getAllPersons(){
+        ArrayList<Person> population = new ArrayList<>();
+        for (int i=0;i<terrain.length;i++){
+            population.addAll(Arrays.asList(terrain[i]));
+        }
+        System.out.println("Before shuffle:" + population);
+        Collections.shuffle(population,random);
+        System.out.println("After shuffle:" + population);
+    }
 }
