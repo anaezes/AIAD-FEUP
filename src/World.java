@@ -1,11 +1,13 @@
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class World extends Agent {
 
-    private HashMap<Point, Person> terrain;
+    private ConcurrentHashMap<Point, Person> terrain;
     private Integer length;
     private Integer width;
     private Double initialPtr;
@@ -24,15 +26,25 @@ public class World extends Agent {
     }
 
     public World(Random random, Integer length, Integer width) {
-        this(random, length, width, 0.12, 1, 0.5, 0.5);
+        this(random, length, width, 0.12, 0.1, 0.05, 1, 0.5, 0.5);
     }
 
-    public World(Random random, Integer length, Integer width, Double initialPtr, Integer immigrantsPerDay, Double immigrantChanceCooperateWithSame, Double immigrantChanceCooperateWithDifferent) {
+    public World(Random random,
+                 Integer length,
+                 Integer width,
+                 Double initialPtr,
+                 Double deathRate,
+                 Double mutationRate,
+                 Integer immigrantsPerDay,
+                 Double immigrantChanceCooperateWithSame,
+                 Double immigrantChanceCooperateWithDifferent) {
         this.random = random;
         this.length = length;
         this.width = width;
-        this.terrain = new HashMap<>();
+        this.terrain = new ConcurrentHashMap<>();
         this.initialPtr = initialPtr;
+        this.deathRate = deathRate;
+        this.mutationRate = mutationRate;
         this.immigrantsPerDay = immigrantsPerDay;
         this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
         this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
@@ -187,6 +199,35 @@ public class World extends Agent {
         Collections.shuffle(emptySites, random);
 
         return emptySites;
+    }
+
+    public void setup() {
+        addBehaviour(new WorkingBehaviour());
+
+        System.out.println(getLocalName() + ": starting to work!");
+    }
+
+    public void takeDown() {
+        System.out.println("This " + getLocalName() + " has ended");
+    }
+
+    class WorkingBehaviour extends Behaviour {
+        private int n = 0;
+
+        public void action() {
+            System.out.println(++n + " I am doing something!");
+            tick();
+            System.out.println("This is the world state");
+            for (Point person: terrain.keySet()){
+                String key = person.toString();
+                String value = terrain.get(person).toString();
+                System.out.println(key + " " + value);
+            }
+        }
+
+        public boolean done() {
+            return n == 20;
+        }
     }
 
 }

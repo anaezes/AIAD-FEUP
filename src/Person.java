@@ -1,11 +1,13 @@
 import jade.core.Agent;
+import uchicago.src.sim.gui.Drawable;
+import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
-public class Person extends Agent {
+public class Person extends Agent implements Drawable {
     private Double ptr;
     private Colour colour;
     private Boolean cooperateWithSame;
@@ -86,5 +88,30 @@ public class Person extends Agent {
         }
 
         return new Person(null, colour, cooperateWithSame, cooperateWithDifferent, null);
+    }
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                ", colour=" + colour +
+                ", coopSame=" + cooperateWithSame +
+                ", coopDiff=" + cooperateWithDifferent +
+                ", location=" + location +
+                '}';
+    }
+
+    @Override
+    public void draw(SimGraphics simGraphics) {
+        simGraphics.drawFastCircle(colour.getAWTColor());
+    }
+
+    @Override
+    public int getX() {
+        return (int)location.getX();
+    }
+
+    @Override
+    public int getY() {
+        return (int)location.getY();
     }
 }
