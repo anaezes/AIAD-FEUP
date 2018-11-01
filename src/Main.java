@@ -18,6 +18,6 @@ public class Main {
         Runtime rt = Runtime.instance();
 
         SimInit init = new SimInit();
-        init.loadModel(new EthnocentrismModel(), null, false);
+        init.loadModel(new Repast3EthnocentrismLauncher(), null, false);
     }
 }

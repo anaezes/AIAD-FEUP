@@ -1,4 +1,4 @@
-import jade.core.Agent;
+import sajas.core.Agent;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
@@ -13,6 +13,15 @@ public class Person extends Agent implements Drawable {
     private Boolean cooperateWithSame;
     private Boolean cooperateWithDifferent;
     private Point location;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     private UUID id;
 
     public Person(Double ptr, Colour colour, Boolean cooperateWithSame, Boolean cooperateWithDifferent, Point location) {
@@ -102,7 +111,19 @@ public class Person extends Agent implements Drawable {
 
     @Override
     public void draw(SimGraphics simGraphics) {
-        simGraphics.drawFastCircle(colour.getAWTColor());
+        if(cooperateWithDifferent) {
+            if (cooperateWithSame) {
+                simGraphics.drawHollowFastOval(this.colour.getAWTColor());
+            } else {
+                simGraphics.drawHollowFastRect(this.colour.getAWTColor());
+            }
+        } else {
+            if (cooperateWithSame) {
+                simGraphics.drawFastOval(this.colour.getAWTColor());
+            } else {
+                simGraphics.drawFastRect(this.colour.getAWTColor());
+            }
+        }
     }
 
     @Override

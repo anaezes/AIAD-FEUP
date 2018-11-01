@@ -1,5 +1,7 @@
-import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
+import jade.wrapper.StaleProxyException;
+import sajas.core.Agent;
+import sajas.core.behaviours.Behaviour;
+import uchicago.src.sim.space.Object2DTorus;
 
 import java.awt.*;
 import java.util.*;
@@ -7,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class World extends Agent {
 
+    private Object2DTorus space;
+    private ArrayList<Person> agentsList;
     private ConcurrentHashMap<Point, Person> terrain;
     private Integer length;
     private Integer width;
@@ -18,18 +22,20 @@ public class World extends Agent {
     private Double gainOfReceiving;
     private Double mutationRate;
     private Double deathRate;
-    private Integer tick;
+    private Integer tickDelay;
     private Random random;
 
-    public World(Random random) {
-        this(random, 50, 50);
+    public World(ArrayList<Person> agentsList, Object2DTorus space, Random random) {
+        this(agentsList, space, random, 50, 50);
     }
 
-    public World(Random random, Integer length, Integer width) {
-        this(random, length, width, 0.12, 0.1, 0.05, 1, 0.5, 0.5);
+    public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, Integer length, Integer width) {
+        this(agentsList, space, random, length, width, 0.12, 0.1, 0.05, 1, 0.5, 0.5);
     }
 
-    public World(Random random,
+    public World(ArrayList<Person> agentsList,
+                 Object2DTorus space,
+                 Random random,
                  Integer length,
                  Integer width,
                  Double initialPtr,
@@ -38,6 +44,8 @@ public class World extends Agent {
                  Integer immigrantsPerDay,
                  Double immigrantChanceCooperateWithSame,
                  Double immigrantChanceCooperateWithDifferent) {
+        this.agentsList = agentsList;
+        this.space = space;
         this.random = random;
         this.length = length;
         this.width = width;
@@ -51,14 +59,20 @@ public class World extends Agent {
     }
 
     Person getPerson(Point point) {
-        return terrain.get(this.normalize(point));
+        return (Person)space.getObjectAt((int)point.getX(),(int)point.getY());
     }
 
-    public void putPerson(Point point, Person person) {
-        terrain.put(this.normalize(point), person);
+    void killPerson(Person person) {
+        space.putObjectAt(person.getX(),person.getY(),null);
+        person.doDelete();
     }
 
-    public HashSet<Person> getNeighbours(Point point) {
+    public void putPerson(Person person) throws StaleProxyException {
+        this.getContainerController().acceptNewAgent("person"+person.getId(),person);
+        space.putObjectAt(person.getX(),person.getY(), person);
+    }
+
+    /*public HashSet<Person> getNeighbours(Point point) {
         HashSet<Person> neighbours = new HashSet<>();
 
         int x = (int) point.getX();
@@ -83,7 +97,7 @@ public class World extends Agent {
         }
 
         return neighbours;
-    }
+    }*/
 
     public void putImmigrant() {
         Person immigrant = randomPerson();
@@ -97,8 +111,13 @@ public class World extends Agent {
             point = new Point(x, y);
         }
 
-        immigrant.setLocation(new Point(x, y));
-        putPerson(point, immigrant);
+        immigrant.setLocation(point);
+        try {
+            putPerson(immigrant);
+            agentsList.add(immigrant);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public Person randomPerson() {
@@ -150,7 +169,10 @@ public class World extends Agent {
 
 
         // Stage 3: Reproduce
-        for (Person person : getRandomPopulation()) {
+        Collections.shuffle(agentsList,random);
+        ArrayList<Person> tempReproduce = new ArrayList<>();
+        for (int i = 0; i < agentsList.size();i++) {
+            Person person = agentsList.get(i);
             ArrayList<Point> emptySites = getEmptyAdjacentSites(person.getLocation());
             if (emptySites.isEmpty()) {
                 continue;
@@ -160,15 +182,31 @@ public class World extends Agent {
                 Point location = emptySites.iterator().next();
                 child.setPtr(initialPtr);
                 child.setLocation(location);
-                putPerson(location, child);
+                tempReproduce.add(child);
+                try {
+                    putPerson(child);
+                    agentsList.add(i+1,child);
+                    i++;
+                } catch (StaleProxyException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
+        for (Person p : tempReproduce) {
+
+        }
+
         // Stage 4: Die :-(
-        for (Person person : terrain.values()) {
+        ArrayList<Person> tempDeath = new ArrayList<>();
+        for (Person person : agentsList) {
             if (random.nextDouble() < deathRate) {
-                terrain.remove(person.getLocation()); // rest in peace sweet prince
+                killPerson(person); // rest in peace sweet prince
+                tempDeath.add(person);
             }
+        }
+        for (Person p : tempDeath) {
+            agentsList.remove(p);
         }
     }
 
@@ -203,7 +241,6 @@ public class World extends Agent {
 
     public void setup() {
         addBehaviour(new WorkingBehaviour());
-
         System.out.println(getLocalName() + ": starting to work!");
     }
 
@@ -217,17 +254,56 @@ public class World extends Agent {
         public void action() {
             System.out.println(++n + " I am doing something!");
             tick();
-            System.out.println("This is the world state");
+            /*System.out.println("This is the world state");
             for (Point person: terrain.keySet()){
                 String key = person.toString();
                 String value = terrain.get(person).toString();
                 System.out.println(key + " " + value);
-            }
+            }*/
         }
 
         public boolean done() {
-            return n == 20;
+            return false;
         }
     }
 
+    public void setInitialPtr(Double initialPtr) {
+        this.initialPtr = initialPtr;
+    }
+
+    public void setImmigrantsPerDay(Integer immigrantsPerDay) {
+        this.immigrantsPerDay = immigrantsPerDay;
+    }
+
+    public void setImmigrantChanceCooperateWithSame(Double immigrantChanceCooperateWithSame) {
+        this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
+    }
+
+    public void setImmigrantChanceCooperateWithDifferent(Double immigrantChanceCooperateWithDifferent) {
+        this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
+    }
+
+    public void setCostOfGiving(Double costOfGiving) {
+        this.costOfGiving = costOfGiving;
+    }
+
+    public void setGainOfReceiving(Double gainOfReceiving) {
+        this.gainOfReceiving = gainOfReceiving;
+    }
+
+    public void setMutationRate(Double mutationRate) {
+        this.mutationRate = mutationRate;
+    }
+
+    public void setDeathRate(Double deathRate) {
+        this.deathRate = deathRate;
+    }
+
+    public Integer getTickDelay() {
+        return tickDelay;
+    }
+
+    public void setTickDelay(Integer tickDelay) {
+        this.tickDelay = tickDelay;
+    }
 }
