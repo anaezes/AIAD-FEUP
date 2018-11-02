@@ -135,4 +135,12 @@ public class Person extends Agent implements Drawable {
     public int getY() {
         return (int)location.getY();
     }
+
+    public Boolean getCooperateWithSame() {
+        return cooperateWithSame;
+    }
+
+    public Boolean getCooperateWithDifferent() {
+        return cooperateWithDifferent;
+    }
 }

@@ -4,6 +4,8 @@ import jade.wrapper.StaleProxyException;
 import sajas.core.Runtime;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
+import uchicago.src.sim.analysis.OpenSequenceGraph;
+import uchicago.src.sim.analysis.Sequence;
 import uchicago.src.sim.engine.*;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
@@ -21,18 +23,21 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     private double mutationRate;
     private double immigrantChanceCooperateWithSame;
     private double immigrantChanceCooperateWithDifferent;
+    private int tickDelay;
     private Object2DTorus space;
     private ArrayList<Person> agentList;
     private DisplaySurface dsurf;
-    private Random random = new Random(System.currentTimeMillis());
+    private Random random;
     private World world;
+    private OpenSequenceGraph plot;
+    private int plotResolution;
 
     @Override
     protected void launchJADE() {
+        random = new Random(this.getRngSeed());
         Runtime rt = Runtime.instance();
         Profile p1 = new ProfileImpl();
         mainContainer = rt.createMainContainer(p1);
-
         try {
             launchAgents();
         } catch (Exception e) {
@@ -54,7 +59,9 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 "deathRate",
                 "mutationRate",
                 "immigrantChanceCooperateWithSame",
-                "immigrantChanceCooperateWithDifferent"};
+                "immigrantChanceCooperateWithDifferent",
+                "tickDelay",
+                "plotResolution"};
     }
 
     @Override
@@ -72,6 +79,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         setImmigrantsPerDay(10);
         setInitialPtr(0.12);
         setMutationRate(0.05);
+        setTickDelay(0);
+        plotResolution = 10;
         if (dsurf != null) dsurf.dispose();
         dsurf = new DisplaySurface(this, "World Display");
         registerDisplaySurface("World Display", dsurf);
@@ -93,7 +102,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 mutationRate,
                 immigrantsPerDay,
                 immigrantChanceCooperateWithSame,
-                immigrantChanceCooperateWithDifferent);
+                immigrantChanceCooperateWithDifferent,
+                tickDelay);
         try {
             mainContainer.acceptNewAgent("world",world).start();
         } catch (StaleProxyException e) {
@@ -104,6 +114,64 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     public void buildModel() {
         agentList = new ArrayList<>();
         space = new Object2DTorus(spaceSize, spaceSize);
+
+        // graph
+        if (plot != null) plot.dispose();
+        plot = new OpenSequenceGraph("Population", this);
+        plot.setAxisTitles("Ticks", "Nr of people");
+
+        // plot number of people that coopSame and coopDiff
+        plot.addSequence("CC", new Sequence() {
+            public double getSValue() {
+                int result = 0;
+                for (Person p: agentList) {
+                    if (p.getCooperateWithSame() && p.getCooperateWithDifferent()){
+                        result++;
+                    }
+                }
+                return result;
+            }
+        });
+        // plot number of people that coopSame and !coopDiff
+        plot.addSequence("CD", new Sequence() {
+            public double getSValue() {
+                int result = 0;
+                for (Person p: agentList) {
+                    if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()){
+                        result++;
+                    }
+                }
+                return result;
+            }
+        });
+
+        // plot number of people that !coopSame and coopDiff
+        plot.addSequence("DC", new Sequence() {
+            public double getSValue() {
+                int result = 0;
+                for (Person p: agentList) {
+                    if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()){
+                        result++;
+                    }
+                }
+                return result;
+            }
+        });
+
+        // plot number of people that !coopSame and !coopDiff
+        plot.addSequence("DD", new Sequence() {
+            public double getSValue() {
+                int result = 0;
+                for (Person p: agentList) {
+                    if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()){
+                        result++;
+                    }
+                }
+                return result;
+            }
+        });
+
+        plot.display();
     }
 
     private void buildDisplay() {
@@ -115,8 +183,9 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     }
 
     private void buildSchedule() {
-        // getSchedule().scheduleActionBeginning(0, new EthnocentrismModel.ImmigrationAction());
+
         getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+        getSchedule().scheduleActionAtInterval(plotResolution, plot, "step", Schedule.LAST);
     }
 
     public int getSpaceSize() {
@@ -192,5 +261,24 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         if(world!=null){
             world.setImmigrantChanceCooperateWithDifferent(immigrantChanceCooperateWithDifferent);
         }
+    }
+
+    public int getTickDelay() {
+        return tickDelay;
+    }
+
+    public void setTickDelay(int tickDelay) {
+        this.tickDelay = tickDelay;
+        if(world!=null){
+            world.setTickDelay(tickDelay);
+        }
+    }
+
+    public int getPlotResolution() {
+        return plotResolution;
+    }
+
+    public void setPlotResolution(int plotResolution) {
+        this.plotResolution = plotResolution;
     }
 }

@@ -30,7 +30,7 @@ public class World extends Agent {
     }
 
     public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, Integer length, Integer width) {
-        this(agentsList, space, random, length, width, 0.12, 0.1, 0.05, 1, 0.5, 0.5);
+        this(agentsList, space, random, length, width, 0.12, 0.1, 0.05, 1, 0.5, 0.5, 0);
     }
 
     public World(ArrayList<Person> agentsList,
@@ -43,7 +43,9 @@ public class World extends Agent {
                  Double mutationRate,
                  Integer immigrantsPerDay,
                  Double immigrantChanceCooperateWithSame,
-                 Double immigrantChanceCooperateWithDifferent) {
+                 Double immigrantChanceCooperateWithDifferent,
+                 int tickDelay) {
+        this.tickDelay = tickDelay;
         this.agentsList = agentsList;
         this.space = space;
         this.random = random;
@@ -167,7 +169,6 @@ public class World extends Agent {
 
         // Stage 2: Help others (or not)
 
-
         // Stage 3: Reproduce
         Collections.shuffle(agentsList,random);
         ArrayList<Person> tempReproduce = new ArrayList<>();
@@ -191,10 +192,6 @@ public class World extends Agent {
                     e.printStackTrace();
                 }
             }
-        }
-
-        for (Person p : tempReproduce) {
-
         }
 
         // Stage 4: Die :-(
@@ -260,6 +257,11 @@ public class World extends Agent {
                 String value = terrain.get(person).toString();
                 System.out.println(key + " " + value);
             }*/
+            try {
+                Thread.sleep(tickDelay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         public boolean done() {
