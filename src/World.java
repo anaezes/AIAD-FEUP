@@ -168,6 +168,16 @@ public class World extends Agent {
         }
 
         // Stage 2: Help others (or not)
+        Collections.shuffle(agentsList, random);
+        for(int i = 0; i < agentsList.size(); i++){
+            Person person = agentsList.get(i);
+            ArrayList<Point> neighborsSites = getNeighborsPositions(person.getLocation());
+            if(neighborsSites.isEmpty()){
+                continue;
+            }
+            //person.receiveNeighbors(neighborsSites);
+            // todo send message
+        }
 
         // Stage 3: Reproduce
         Collections.shuffle(agentsList,random);
@@ -205,6 +215,35 @@ public class World extends Agent {
         for (Person p : tempDeath) {
             agentsList.remove(p);
         }
+    }
+
+    private ArrayList<Point> getNeighborsPositions(Point location) {
+        ArrayList<Point> busySites = new ArrayList<>();
+
+        int x = (int) location.getX();
+        int y = (int) location.getY();
+
+        Point up = new Point(x, y - 1);
+        Point down = new Point(x, y + 1);
+        Point left = new Point(x - 1, y);
+        Point right = new Point(x + 1, y);
+
+        if (getPerson(up) != null) {
+            busySites.add(up);
+        }
+        if (getPerson(down) != null) {
+            busySites.add(down);
+        }
+        if (getPerson(left) != null) {
+            busySites.add(left);
+        }
+        if (getPerson(right) != null) {
+            busySites.add(right);
+        }
+
+        Collections.shuffle(busySites, random);
+
+        return busySites;
     }
 
     public ArrayList<Point> getEmptyAdjacentSites(Point location) {
