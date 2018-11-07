@@ -1,23 +1,24 @@
-import jade.core.MessageQueue;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
-import sajas.core.*;
-import sajas.core.behaviours.Behaviour;
 import sajas.core.behaviours.CyclicBehaviour;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class Person extends Agent implements Drawable {
+
+    private static final double INCREASE_VALUE_PTR = 0.03;
+    private static final double DECREASE_VALUE_PTR = 0.01;
+
     private Double ptr;
     private Colour colour;
     private Boolean cooperateWithSame;
     private Boolean cooperateWithDifferent;
     private Point location;
-    //private MessageQueue mailBox = null;
+
 
 
     public UUID getId() {
@@ -65,7 +66,8 @@ public class Person extends Agent implements Drawable {
     }
 
     public void setPtr(Double ptr) {
-        this.ptr = ptr;
+        DecimalFormat df = new DecimalFormat("#.##");
+        this.ptr = Double.valueOf(df.format(ptr));
     }
 
     Person reproduce(Double mutationRate, Random random) {
@@ -151,9 +153,7 @@ public class Person extends Agent implements Drawable {
     }
 
     public void setup() {
-        this.setColour();
         addBehaviour(new behaviour());
-
     }
 
     private class behaviour extends CyclicBehaviour {
@@ -166,22 +166,23 @@ public class Person extends Agent implements Drawable {
 
             int type = message.getPerformative();
 
-            //type
             switch (type){
                 case ACLMessage.INFORM:
                     String c = message.getContent();
                     String msg = c.substring(1, c.length()-1);
-                    String[] neighbors = msg.split(", ");
-                    proposeNeighbors(neighbors);
-
-                    System.out.println("Send proposal!\n");
+                    proposeNeighbors(msg.split(", "));
+                    // System.out.println("receive INFORM - Send proposals to my neighbors !\n");
                     break;
                 case ACLMessage.PROPOSE:
-                    System.out.println("Receive proposal!\n");
+                    boolean cooperation = StudyProposal(message.getContent());
+                    sendResponse(message, cooperation);
                     break;
                 case ACLMessage.ACCEPT_PROPOSAL:
+                    System.out.println("Receive ACCEPT_PROPOSAL!\n");
+                    processAcceptProposal();
                     break;
                 case ACLMessage.REJECT_PROPOSAL:
+                    System.out.println("Receive REJECT_PROPOSAL!\n");
                     break;
                 default:
                     //do nothing
@@ -190,19 +191,54 @@ public class Person extends Agent implements Drawable {
 
     }
 
+    private void processAcceptProposal() {
+        this.setPtr(this.ptr + INCREASE_VALUE_PTR);
+    }
+
+    private void sendResponse(ACLMessage message, boolean colaborate) {
+        ACLMessage response = message.createReply();
+
+        if(colaborate) {
+            this.setPtr(this.ptr - DECREASE_VALUE_PTR);
+            response.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+        }
+        else {
+            response.setPerformative(ACLMessage.REJECT_PROPOSAL);
+        }
+
+        System.out.println("Receive PROPOSE! my color:" + this.colour +
+                " color of proposal: " + message.getContent() +
+                " help? "  + colaborate + "\n");
+
+        response.addReplyTo(this.getAID());
+        this.send(response);
+
+    }
+
+    private boolean StudyProposal(String content) {
+
+     if(this.colour.equals(Colour.RED))
+         return false;
+
+     if(this.colour.equals(Colour.BLUE))
+         return !content.equals("BLUE");
+
+     if(this.colour.equals(Colour.GREEN))
+         return content.equals("GREEN");
+
+     return true;
+
+    }
+
     private void proposeNeighbors(String[] neighbors) {
 
-       for(int i = 0; i < neighbors.length; i++) {
-           System.out.println("\nNeighbor: " + neighbors[i]);
-           ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
-           message.addReceiver(AidHolder.getInstance().getAID(neighbors[i]));
-           message.setContent(colour.toString());
-           this.send(message);
+        for(int i = 0; i < neighbors.length; i++) {
+            //System.out.println("\nNeighbor: " + neighbors[i]);
+            ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
+            message.addReceiver(AidHolder.getInstance().getAID(neighbors[i]));
+            message.setContent(colour.toString());
+            message.addReplyTo(this.getAID());
+            this.send(message);
         }
     }
-
-    private void setColour() {
-        this.colour = Colour.RED;
-    }
-
 }

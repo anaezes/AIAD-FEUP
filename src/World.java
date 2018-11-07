@@ -85,11 +85,12 @@ public class World extends Agent {
     void killPerson(Person person) {
         space.putObjectAt(person.getX(),person.getY(),null);
         person.doDelete();
-        aidHolder.removeAID(person.getAID().toString());
+        aidHolder.removeAID(person.getAID().getName());
     }
 
     public void putPerson(Person person) throws StaleProxyException {
-        this.getContainerController().acceptNewAgent("person"+person.getId(),person);
+        this.getContainerController().acceptNewAgent("person"+person.getId(),person).start();
+        aidHolder.addAID(person.getAID());
         space.putObjectAt(person.getX(),person.getY(), person);
     }
 
@@ -136,9 +137,7 @@ public class World extends Agent {
         try {
             putPerson(immigrant);
             agentsList.add(immigrant);
-            mainContainer.acceptNewAgent(immigrant.getName(),immigrant).start();
-            System.out.println("put person: " + immigrant.getAID());
-            aidHolder.addAID(immigrant.getAID());
+
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -247,7 +246,7 @@ public class World extends Agent {
 
         for(int i = 0; i < neighborsSites.size(); i++) {
             AID aid = this.getPerson(neighborsSites.get(i)).getAID();
-            tmp.add(aid.toString());
+            tmp.add(aid.getName());
         }
 
         message.setContent(tmp.toString());

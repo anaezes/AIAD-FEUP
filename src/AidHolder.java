@@ -18,7 +18,7 @@ public class AidHolder {
 
     public void addAID(AID aid){
         synchronized (aids) {
-            aids.put(aid.toString(), aid);
+            aids.put(aid.getName(), aid);
         }
     }
 
