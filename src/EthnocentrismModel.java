@@ -1,6 +1,3 @@
-import uchicago.src.reflector.ListPropertyDescriptor;
-import uchicago.src.sim.analysis.OpenSequenceGraph;
-import uchicago.src.sim.analysis.Sequence;
 import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimModelImpl;
@@ -10,9 +7,7 @@ import uchicago.src.sim.space.Object2DTorus;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Random;
-import java.util.Vector;
 
 public class EthnocentrismModel extends SimModelImpl {
 
@@ -20,7 +15,13 @@ public class EthnocentrismModel extends SimModelImpl {
     private Object2DTorus space;
     private ArrayList<Person> agentList;
     private DisplaySurface dsurf;
+    private int spaceSize;
+    private Double initialPtr;
 
+    public EthnocentrismModel() {
+        spaceSize = 50;
+        initialPtr = 0.12;
+    }
 
     public int getSpaceSize() {
         return spaceSize;
@@ -38,17 +39,9 @@ public class EthnocentrismModel extends SimModelImpl {
         this.initialPtr = initialPtr;
     }
 
-    private int spaceSize;
-    private Double initialPtr;
-
-    public EthnocentrismModel(){
-        spaceSize = 50;
-        initialPtr = 0.12;
-    }
-
     @Override
     public String[] getInitParam() {
-        return new String[] { "spaceSize",
+        return new String[]{"spaceSize",
                 "initialPTR"};
     }
 
@@ -103,7 +96,7 @@ public class EthnocentrismModel extends SimModelImpl {
             Random rand = new Random();
             int x = rand.nextInt(spaceSize);
             int y = rand.nextInt(spaceSize);
-            Person p = new Person(0.12,Colour.BLUE,true,true, new Point(x,y));
+            Person p = new Person(0.12, Colour.BLUE, true, true, new Point(x, y));
             agentList.add(p);
         }
     }

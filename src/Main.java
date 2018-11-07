@@ -1,12 +1,4 @@
-import jade.core.Agent;
-import jade.core.Profile;
-import jade.core.ProfileImpl;
 import jade.core.Runtime;
-import jade.util.ExtendedProperties;
-import jade.util.leap.Properties;
-import jade.wrapper.AgentController;
-import jade.wrapper.ContainerController;
-import jade.wrapper.StaleProxyException;
 import uchicago.src.sim.engine.SimInit;
 
 import java.util.Random;

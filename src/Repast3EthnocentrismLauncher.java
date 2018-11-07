@@ -52,7 +52,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     @Override
     public String[] getInitParam() {
-        return new String[] {
+        return new String[]{
                 "spaceSize",
                 "immigrantsPerDay",
                 "initialPtr",
@@ -106,7 +106,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 tickDelay,
                 mainContainer);
         try {
-            mainContainer.acceptNewAgent("world",world).start();
+            mainContainer.acceptNewAgent("world", world).start();
         } catch (StaleProxyException e) {
             e.printStackTrace();
         }
@@ -125,8 +125,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         plot.addSequence("CC", new Sequence() {
             public double getSValue() {
                 int result = 0;
-                for (Person p: agentList) {
-                    if (p.getCooperateWithSame() && p.getCooperateWithDifferent()){
+                for (Person p : agentList) {
+                    if (p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
                         result++;
                     }
                 }
@@ -137,8 +137,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         plot.addSequence("CD", new Sequence() {
             public double getSValue() {
                 int result = 0;
-                for (Person p: agentList) {
-                    if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()){
+                for (Person p : agentList) {
+                    if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
                         result++;
                     }
                 }
@@ -150,8 +150,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         plot.addSequence("DC", new Sequence() {
             public double getSValue() {
                 int result = 0;
-                for (Person p: agentList) {
-                    if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()){
+                for (Person p : agentList) {
+                    if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
                         result++;
                     }
                 }
@@ -163,8 +163,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         plot.addSequence("DD", new Sequence() {
             public double getSValue() {
                 int result = 0;
-                for (Person p: agentList) {
-                    if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()){
+                for (Person p : agentList) {
+                    if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
                         result++;
                     }
                 }
@@ -203,7 +203,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setImmigrantsPerDay(Integer immigrantsPerDay) {
         this.immigrantsPerDay = immigrantsPerDay;
-        if(world!=null){
+        if (world != null) {
             world.setImmigrantsPerDay(immigrantsPerDay);
         }
     }
@@ -214,7 +214,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setInitialPtr(double initialPtr) {
         this.initialPtr = initialPtr;
-        if(world!=null){
+        if (world != null) {
             world.setInitialPtr(initialPtr);
         }
     }
@@ -225,7 +225,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setDeathRate(double deathRate) {
         this.deathRate = deathRate;
-        if(world!=null){
+        if (world != null) {
             world.setDeathRate(deathRate);
         }
     }
@@ -236,7 +236,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setMutationRate(double mutationRate) {
         this.mutationRate = mutationRate;
-        if(world!=null){
+        if (world != null) {
             world.setMutationRate(mutationRate);
         }
     }
@@ -247,7 +247,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setImmigrantChanceCooperateWithSame(double immigrantChanceCooperateWithSame) {
         this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
-        if(world!=null){
+        if (world != null) {
             world.setImmigrantChanceCooperateWithSame(immigrantChanceCooperateWithSame);
         }
 
@@ -259,7 +259,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setImmigrantChanceCooperateWithDifferent(double immigrantChanceCooperateWithDifferent) {
         this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
-        if(world!=null){
+        if (world != null) {
             world.setImmigrantChanceCooperateWithDifferent(immigrantChanceCooperateWithDifferent);
         }
     }
@@ -270,7 +270,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     public void setTickDelay(int tickDelay) {
         this.tickDelay = tickDelay;
-        if(world!=null){
+        if (world != null) {
             world.setTickDelay(tickDelay);
         }
     }

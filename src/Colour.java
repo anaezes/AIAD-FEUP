@@ -9,7 +9,7 @@ public enum Colour {
         this.color = color;
     }
 
-    Color getAWTColor(){
+    Color getAWTColor() {
         return color;
     }
 }

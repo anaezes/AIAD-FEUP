@@ -7,7 +7,9 @@ import sajas.wrapper.ContainerController;
 import uchicago.src.sim.space.Object2DTorus;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class World extends Agent {
@@ -28,7 +30,6 @@ public class World extends Agent {
     private Integer tickDelay;
     private Random random;
     private ContainerController mainContainer;
-    private final AidHolder aidHolder = AidHolder.getInstance();
 
     public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, ContainerController mainContainer) {
         this(agentsList, space, random, 50, 50, mainContainer);
@@ -79,23 +80,21 @@ public class World extends Agent {
     }
 
     Person getPerson(Point point) {
-        return (Person)space.getObjectAt((int)point.getX(),(int)point.getY());
+        return (Person) space.getObjectAt((int) point.getX(), (int) point.getY());
     }
 
     void killPerson(Person person) {
-        space.putObjectAt(person.getX(),person.getY(),null);
+        space.putObjectAt(person.getX(), person.getY(), null);
         person.doDelete();
-        aidHolder.removeAID(person.getAID().getName());
     }
 
     public void putPerson(Person person) throws StaleProxyException {
-        this.getContainerController().acceptNewAgent("person"+person.getId(),person).start();
-        aidHolder.addAID(person.getAID());
+        this.getContainerController().acceptNewAgent("person-" + person.getId(), person).start();
         space.putObjectAt(person.getX(),person.getY(), person);
     }
 
-    /*public HashSet<Person> getNeighbours(Point point) {
-        HashSet<Person> neighbours = new HashSet<>();
+    public ArrayList<Person> getNeighbours(Point point) {
+        ArrayList<Person> neighbours = new ArrayList<>();
 
         int x = (int) point.getX();
         int y = (int) point.getY();
@@ -119,7 +118,7 @@ public class World extends Agent {
         }
 
         return neighbours;
-    }*/
+    }
 
     public void putImmigrant() {
         Person immigrant = randomPerson();
@@ -138,7 +137,7 @@ public class World extends Agent {
             putPerson(immigrant);
             agentsList.add(immigrant);
 
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -191,19 +190,19 @@ public class World extends Agent {
 
         // Stage 2: Help others (or not)
         Collections.shuffle(agentsList, random);
-        for(int i = 0; i < agentsList.size(); i++){
+        for (int i = 0; i < agentsList.size(); i++) {
             Person person = agentsList.get(i);
-            ArrayList<Point> neighborsSites = getNeighborsPositions(person.getLocation());
-            if(neighborsSites.isEmpty()){
+            ArrayList<Person> neighbours = getNeighbours(person.getLocation());
+            if (neighbours.isEmpty()) {
                 continue;
             }
-            this.sendMessageToPerson(neighborsSites, person);
+            this.sendMessageToPerson(person, neighbours);
         }
 
         // Stage 3: Reproduce
-        Collections.shuffle(agentsList,random);
+        Collections.shuffle(agentsList, random);
         ArrayList<Person> tempReproduce = new ArrayList<>();
-        for (int i = 0; i < agentsList.size();i++) {
+        for (int i = 0; i < agentsList.size(); i++) {
             Person person = agentsList.get(i);
             ArrayList<Point> emptySites = getEmptyAdjacentSites(person.getLocation());
             if (emptySites.isEmpty()) {
@@ -217,7 +216,7 @@ public class World extends Agent {
                 tempReproduce.add(child);
                 try {
                     putPerson(child);
-                    agentsList.add(i+1,child);
+                    agentsList.add(i + 1, child);
                     i++;
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
@@ -238,22 +237,24 @@ public class World extends Agent {
         }
     }
 
-    private void sendMessageToPerson(ArrayList<Point> neighborsSites, Person person) {
+    private void sendMessageToPerson(Person person, ArrayList<Person> neighbours) {
 
         ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+
         message.addReceiver(person.getAID());
-        ArrayList<String> tmp = new ArrayList<>();
 
-        for(int i = 0; i < neighborsSites.size(); i++) {
-            AID aid = this.getPerson(neighborsSites.get(i)).getAID();
-            tmp.add(aid.getName());
+        StringBuilder content = new StringBuilder();
+        for (int i = 0; i < neighbours.size(); i++) {
+            content.append(neighbours.get(i).getName()).append(",");
         }
+        message.setContent(content.toString());
 
-        message.setContent(tmp.toString());
+        System.out.println(message);
+
         this.send(message);
     }
 
-    private ArrayList<Point> getNeighborsPositions(Point location) {
+    private ArrayList<Point> getNeighboursPositions(Point location) {
         ArrayList<Point> busySites = new ArrayList<>();
 
         int x = (int) location.getX();
@@ -320,30 +321,6 @@ public class World extends Agent {
         System.out.println("This " + getLocalName() + " has ended");
     }
 
-    class WorkingBehaviour extends Behaviour {
-        private int n = 0;
-
-        public void action() {
-            //System.out.println(++n + " I am doing something!");
-            tick();
-            /*System.out.println("This is the world state");
-            for (Point person: terrain.keySet()){
-                String key = person.toString();
-                String value = terrain.get(person).toString();
-                System.out.println(key + " " + value);
-            }*/
-            try {
-                Thread.sleep(tickDelay);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public boolean done() {
-            return false;
-        }
-    }
-
     public void setInitialPtr(Double initialPtr) {
         this.initialPtr = initialPtr;
     }
@@ -382,5 +359,29 @@ public class World extends Agent {
 
     public void setTickDelay(Integer tickDelay) {
         this.tickDelay = tickDelay;
+    }
+
+    class WorkingBehaviour extends Behaviour {
+        private int n = 0;
+
+        public void action() {
+            //System.out.println(++n + " I am doing something!");
+            tick();
+            /*System.out.println("This is the world state");
+            for (Point person: terrain.keySet()){
+                String key = person.toString();
+                String value = terrain.get(person).toString();
+                System.out.println(key + " " + value);
+            }*/
+            try {
+                Thread.sleep(tickDelay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public boolean done() {
+            return false;
+        }
     }
 }

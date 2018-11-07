@@ -10,5 +10,6 @@
     <orderEntry type="library" name="jade" level="project" />
     <orderEntry type="library" name="repastj" level="project" />
     <orderEntry type="library" name="SAJaS" level="project" />
+    <orderEntry type="library" name="repast" level="project" />
   </component>
 </module>
