@@ -103,7 +103,8 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 immigrantsPerDay,
                 immigrantChanceCooperateWithSame,
                 immigrantChanceCooperateWithDifferent,
-                tickDelay);
+                tickDelay,
+                mainContainer);
         try {
             mainContainer.acceptNewAgent("world",world).start();
         } catch (StaleProxyException e) {
