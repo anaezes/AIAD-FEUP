@@ -1,6 +1,9 @@
+import jade.core.AID;
+import jade.lang.acl.ACLMessage;
 import jade.wrapper.StaleProxyException;
 import sajas.core.Agent;
 import sajas.core.behaviours.Behaviour;
+import sajas.wrapper.ContainerController;
 import uchicago.src.sim.space.Object2DTorus;
 
 import java.awt.*;
@@ -24,13 +27,26 @@ public class World extends Agent {
     private Double deathRate;
     private Integer tickDelay;
     private Random random;
+    private ContainerController mainContainer;
+    private final AidHolder aidHolder = AidHolder.getInstance();
 
-    public World(ArrayList<Person> agentsList, Object2DTorus space, Random random) {
-        this(agentsList, space, random, 50, 50);
+    public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, ContainerController mainContainer) {
+        this(agentsList, space, random, 50, 50, mainContainer);
     }
 
-    public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, Integer length, Integer width) {
-        this(agentsList, space, random, length, width, 0.12, 0.1, 0.05, 1, 0.5, 0.5, 0);
+    public World(ArrayList<Person> agentsList,
+                 Object2DTorus space,
+                 Random random,
+                 Integer length,
+                 Integer width,
+                 ContainerController mainContainer) {
+        this(agentsList, space, random, length, width, 0.12, 0.1,
+                0.05,
+                1,
+                0.5,
+                0.5,
+                0,
+                mainContainer);
     }
 
     public World(ArrayList<Person> agentsList,
@@ -44,7 +60,8 @@ public class World extends Agent {
                  Integer immigrantsPerDay,
                  Double immigrantChanceCooperateWithSame,
                  Double immigrantChanceCooperateWithDifferent,
-                 int tickDelay) {
+                 int tickDelay,
+                 ContainerController mainContainer) {
         this.tickDelay = tickDelay;
         this.agentsList = agentsList;
         this.space = space;
@@ -58,6 +75,7 @@ public class World extends Agent {
         this.immigrantsPerDay = immigrantsPerDay;
         this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
         this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
+        this.mainContainer = mainContainer;
     }
 
     Person getPerson(Point point) {
@@ -67,6 +85,7 @@ public class World extends Agent {
     void killPerson(Person person) {
         space.putObjectAt(person.getX(),person.getY(),null);
         person.doDelete();
+        aidHolder.removeAID(person.getAID().toString());
     }
 
     public void putPerson(Person person) throws StaleProxyException {
@@ -117,9 +136,13 @@ public class World extends Agent {
         try {
             putPerson(immigrant);
             agentsList.add(immigrant);
+            mainContainer.acceptNewAgent(immigrant.getName(),immigrant).start();
+            System.out.println("put person: " + immigrant.getAID());
+            aidHolder.addAID(immigrant.getAID());
         } catch(Exception e) {
             e.printStackTrace();
         }
+
     }
 
     public Person randomPerson() {
@@ -175,8 +198,7 @@ public class World extends Agent {
             if(neighborsSites.isEmpty()){
                 continue;
             }
-            //person.receiveNeighbors(neighborsSites);
-            // todo send message
+            this.sendMessageToPerson(neighborsSites, person);
         }
 
         // Stage 3: Reproduce
@@ -215,6 +237,21 @@ public class World extends Agent {
         for (Person p : tempDeath) {
             agentsList.remove(p);
         }
+    }
+
+    private void sendMessageToPerson(ArrayList<Point> neighborsSites, Person person) {
+
+        ACLMessage message = new ACLMessage(ACLMessage.INFORM);
+        message.addReceiver(person.getAID());
+        ArrayList<String> tmp = new ArrayList<>();
+
+        for(int i = 0; i < neighborsSites.size(); i++) {
+            AID aid = this.getPerson(neighborsSites.get(i)).getAID();
+            tmp.add(aid.toString());
+        }
+
+        message.setContent(tmp.toString());
+        this.send(message);
     }
 
     private ArrayList<Point> getNeighborsPositions(Point location) {
@@ -288,7 +325,7 @@ public class World extends Agent {
         private int n = 0;
 
         public void action() {
-            System.out.println(++n + " I am doing something!");
+            //System.out.println(++n + " I am doing something!");
             tick();
             /*System.out.println("This is the world state");
             for (Point person: terrain.keySet()){

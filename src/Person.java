@@ -1,11 +1,15 @@
+import jade.core.MessageQueue;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
+import sajas.core.*;
+import sajas.core.behaviours.Behaviour;
+import sajas.core.behaviours.CyclicBehaviour;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
-import java.util.Objects;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 public class Person extends Agent implements Drawable {
     private Double ptr;
@@ -13,6 +17,8 @@ public class Person extends Agent implements Drawable {
     private Boolean cooperateWithSame;
     private Boolean cooperateWithDifferent;
     private Point location;
+    //private MessageQueue mailBox = null;
+
 
     public UUID getId() {
         return id;
@@ -143,4 +149,60 @@ public class Person extends Agent implements Drawable {
     public Boolean getCooperateWithDifferent() {
         return cooperateWithDifferent;
     }
+
+    public void setup() {
+        this.setColour();
+        addBehaviour(new behaviour());
+
+    }
+
+    private class behaviour extends CyclicBehaviour {
+        @Override
+        public void action() {
+
+            ACLMessage message = receive();
+            if(message == null)
+                return;
+
+            int type = message.getPerformative();
+
+            //type
+            switch (type){
+                case ACLMessage.INFORM:
+                    String c = message.getContent();
+                    String msg = c.substring(1, c.length()-1);
+                    String[] neighbors = msg.split(", ");
+                    proposeNeighbors(neighbors);
+
+                    System.out.println("Send proposal!\n");
+                    break;
+                case ACLMessage.PROPOSE:
+                    System.out.println("Receive proposal!\n");
+                    break;
+                case ACLMessage.ACCEPT_PROPOSAL:
+                    break;
+                case ACLMessage.REJECT_PROPOSAL:
+                    break;
+                default:
+                    //do nothing
+            }
+        }
+
+    }
+
+    private void proposeNeighbors(String[] neighbors) {
+
+       for(int i = 0; i < neighbors.length; i++) {
+           System.out.println("\nNeighbor: " + neighbors[i]);
+           ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
+           message.addReceiver(AidHolder.getInstance().getAID(neighbors[i]));
+           message.setContent(colour.toString());
+           this.send(message);
+        }
+    }
+
+    private void setColour() {
+        this.colour = Colour.RED;
+    }
+
 }
