@@ -28,25 +28,22 @@ public class World extends Agent {
     private Double deathRate;
     private Integer tickDelay;
     private Random random;
-    private ContainerController mainContainer;
 
     public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, ContainerController mainContainer) {
-        this(agentsList, space, random, 50, 50, mainContainer);
+        this(agentsList, space, random, 50, 50);
     }
 
     public World(ArrayList<Person> agentsList,
                  Object2DTorus space,
                  Random random,
                  Integer length,
-                 Integer width,
-                 ContainerController mainContainer) {
+                 Integer width) {
         this(agentsList, space, random, length, width, 0.12, 0.1,
                 0.05,
                 1,
                 0.5,
                 0.5,
-                0,
-                mainContainer);
+                0);
     }
 
     public World(ArrayList<Person> agentsList,
@@ -60,8 +57,7 @@ public class World extends Agent {
                  Integer immigrantsPerDay,
                  Double immigrantChanceCooperateWithSame,
                  Double immigrantChanceCooperateWithDifferent,
-                 int tickDelay,
-                 ContainerController mainContainer) {
+                 int tickDelay) {
         this.tickDelay = tickDelay;
         this.agentsList = agentsList;
         this.space = space;
@@ -75,7 +71,6 @@ public class World extends Agent {
         this.immigrantsPerDay = immigrantsPerDay;
         this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
         this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
-        this.mainContainer = mainContainer;
     }
 
     Person getPerson(Point point) {
