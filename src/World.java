@@ -1,4 +1,3 @@
-import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import jade.wrapper.StaleProxyException;
 import sajas.core.Agent;
@@ -197,6 +196,7 @@ public class World extends Agent {
                 continue;
             }
             this.sendMessageToPerson(person, neighbours);
+            //waitForReply();
         }
 
         // Stage 3: Reproduce
@@ -249,9 +249,18 @@ public class World extends Agent {
         }
         message.setContent(content.toString());
 
-        System.out.println(message);
+        message.addReplyTo(getAID());
 
         this.send(message);
+    }
+
+    private void waitForReply() {
+        ACLMessage message = null;
+
+        while (message == null) {
+            message = receive();
+            System.out.println("still waiting");
+        }
     }
 
     private ArrayList<Point> getNeighboursPositions(Point location) {

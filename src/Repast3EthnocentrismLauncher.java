@@ -6,11 +6,12 @@ import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
 import uchicago.src.sim.analysis.OpenSequenceGraph;
 import uchicago.src.sim.analysis.Sequence;
-import uchicago.src.sim.engine.*;
+import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
 import uchicago.src.sim.space.Object2DTorus;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -76,7 +77,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         setDeathRate(0.1);
         setImmigrantChanceCooperateWithDifferent(0.5);
         setImmigrantChanceCooperateWithSame(0.5);
-        setImmigrantsPerDay(10);
+        setImmigrantsPerDay(1);
         setInitialPtr(0.12);
         setMutationRate(0.05);
         setTickDelay(0);
@@ -132,7 +133,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        });
+        }, Color.GREEN, 0);
         // plot number of people that coopSame and !coopDiff
         plot.addSequence("CD", new Sequence() {
             public double getSValue() {
@@ -144,7 +145,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        });
+        }, Color.RED, 0);
 
         // plot number of people that !coopSame and coopDiff
         plot.addSequence("DC", new Sequence() {
@@ -157,7 +158,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        });
+        }, Color.ORANGE, 0);
 
         // plot number of people that !coopSame and !coopDiff
         plot.addSequence("DD", new Sequence() {
@@ -170,7 +171,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        });
+        }, Color.DARK_GRAY, 0);
 
         plot.display();
     }

@@ -6,7 +6,6 @@ import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
-import java.text.DecimalFormat;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -22,6 +21,9 @@ public class Person extends Agent implements Drawable {
     private Boolean cooperateWithDifferent;
     private Point location;
     private UUID id;
+
+    private Integer neighbourCount;
+    private String world;
 
     public Person(Double ptr, Colour colour, Boolean cooperateWithSame, Boolean cooperateWithDifferent, Point location) {
         this.ptr = ptr;
@@ -159,49 +161,46 @@ public class Person extends Agent implements Drawable {
         this.setPtr(this.ptr + INCREASE_VALUE_PTR);
     }
 
-    private void sendResponse(ACLMessage message, boolean colaborate) {
+    private void sendResponse(ACLMessage message, boolean collaborate) {
         ACLMessage response = message.createReply();
 
-        if (colaborate) {
+        if (collaborate) {
             this.setPtr(this.ptr - DECREASE_VALUE_PTR);
             response.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
         } else {
             response.setPerformative(ACLMessage.REJECT_PROPOSAL);
         }
 
-        System.out.println("Receive PROPOSE! my color:" + this.colour +
-                " color of proposal: " + message.getContent() +
-                " help? " + colaborate + "\n");
+        System.out.println(getName() + ": " + message.getSender().getName() + " proposed.");
+        System.out.println("my colour: " + colour + " their colour: " + message.getContent());
+        System.out.println("help same: " + cooperateWithSame + " help others: " + cooperateWithDifferent);
+        System.out.println("decision: " + collaborate);
 
         response.addReplyTo(this.getAID());
         this.send(response);
-
     }
 
-    private boolean StudyProposal(String content) {
+    private boolean studyProposal(String content) {
+        if (cooperateWithSame && colour.toString().equals(content)) {
+            return true;
+        }
 
-        if (this.colour.equals(Colour.RED))
-            return false;
+        if (cooperateWithDifferent && !colour.toString().equals(content)) {
+            return true;
+        }
 
-        if (this.colour.equals(Colour.BLUE))
-            return !content.equals("BLUE");
-
-        if (this.colour.equals(Colour.GREEN))
-            return content.equals("GREEN");
-
-        return true;
-
+        return false;
     }
 
     private void proposeNeighbours(String[] neighbours) {
-
+        neighbourCount = neighbours.length;
         for (int i = 0; i < neighbours.length; i++) {
-            System.out.println("Neighbour: " + neighbours[i]);
+            final AID r = new AID(neighbours[i], true);
+            System.out.println(getName() + ": neighbour " + r.getName());
             ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
-            message.addReceiver(new AID(neighbours[i], true));
+            message.addReceiver(r);
             message.setContent(colour.toString());
             message.addReplyTo(this.getAID());
-            System.out.println(message);
             this.send(message);
         }
     }
@@ -209,33 +208,40 @@ public class Person extends Agent implements Drawable {
     private class behaviour extends CyclicBehaviour {
         @Override
         public void action() {
-
             ACLMessage message = receive();
-            if (message == null)
+
+            if (message == null) {
                 return;
+            }
 
             int type = message.getPerformative();
 
             switch (type) {
                 case ACLMessage.INFORM:
-                    String c = message.getContent();
-                    String msg = c.substring(0, c.length() - 1);
-                    proposeNeighbours(msg.split(","));
-                    // System.out.println("receive INFORM - Send proposals to my neighbours !\n");
+                    world = message.getSender().getName();
+                    proposeNeighbours(message.getContent().split(","));
                     break;
                 case ACLMessage.PROPOSE:
-                    boolean cooperation = StudyProposal(message.getContent());
+                    boolean cooperation = studyProposal(message.getContent());
                     sendResponse(message, cooperation);
                     break;
                 case ACLMessage.ACCEPT_PROPOSAL:
                     System.out.println("Receive ACCEPT_PROPOSAL!\n");
                     processAcceptProposal();
+                    neighbourCount--;
                     break;
                 case ACLMessage.REJECT_PROPOSAL:
                     System.out.println("Receive REJECT_PROPOSAL!\n");
+                    neighbourCount--;
                     break;
                 default:
                     //do nothing
+            }
+
+            if (neighbourCount.equals(0)) {
+                ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
+                reply.addReceiver(new AID(world, true));
+                send(message);
             }
         }
 
