@@ -32,6 +32,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     private World world;
     private OpenSequenceGraph plot;
     private int plotResolution;
+    private boolean smartChoice;
 
     @Override
     protected void launchJADE() {
@@ -62,12 +63,24 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 "immigrantChanceCooperateWithSame",
                 "immigrantChanceCooperateWithDifferent",
                 "tickDelay",
-                "plotResolution"};
+                "plotResolution",
+                "smartChoice"};
     }
 
     @Override
     public String getName() {
         return "Ethnocentrism Model";
+    }
+
+    public boolean isSmartChoice() {
+        return smartChoice;
+    }
+
+    public void setSmartChoice(boolean smartChoice) {
+        this.smartChoice = smartChoice;
+        if (world != null) {
+            world.setSmartChoice(smartChoice);
+        }
     }
 
     @Override
@@ -79,8 +92,9 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         setImmigrantChanceCooperateWithSame(0.5);
         setImmigrantsPerDay(1);
         setInitialPtr(0.12);
-        setMutationRate(0.05);
+        setMutationRate(0.005);
         setTickDelay(0);
+        setSmartChoice(true);
         plotResolution = 10;
         if (dsurf != null) dsurf.dispose();
         dsurf = new DisplaySurface(this, "World Display");
@@ -104,7 +118,9 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 immigrantsPerDay,
                 immigrantChanceCooperateWithSame,
                 immigrantChanceCooperateWithDifferent,
-                tickDelay);
+                tickDelay,
+                smartChoice,
+                plot);
         try {
             mainContainer.acceptNewAgent("world", world).start();
         } catch (StaleProxyException e) {
@@ -119,10 +135,10 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         // graph
         if (plot != null) plot.dispose();
         plot = new OpenSequenceGraph("Population", this);
-        plot.setAxisTitles("Ticks", "Nr of people");
+        plot.setAxisTitles("World cycles", "# of people");
 
         // plot number of people that coopSame and coopDiff
-        plot.addSequence("CC", new Sequence() {
+        plot.addSequence("Green - CC", new Sequence() {
             public double getSValue() {
                 int result = 0;
                 for (Person p : agentList) {
@@ -132,9 +148,9 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        }, Color.GREEN, 0);
+        }, Color.GREEN, 10);
         // plot number of people that coopSame and !coopDiff
-        plot.addSequence("CD", new Sequence() {
+        plot.addSequence("Red - CD", new Sequence() {
             public double getSValue() {
                 int result = 0;
                 for (Person p : agentList) {
@@ -144,10 +160,10 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        }, Color.RED, 0);
+        }, Color.RED, 10);
 
         // plot number of people that !coopSame and coopDiff
-        plot.addSequence("DC", new Sequence() {
+        plot.addSequence("Orange - DC", new Sequence() {
             public double getSValue() {
                 int result = 0;
                 for (Person p : agentList) {
@@ -157,10 +173,10 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        }, Color.ORANGE, 0);
+        }, Color.ORANGE, 10);
 
         // plot number of people that !coopSame and !coopDiff
-        plot.addSequence("DD", new Sequence() {
+        plot.addSequence("Gray - DD", new Sequence() {
             public double getSValue() {
                 int result = 0;
                 for (Person p : agentList) {
@@ -170,7 +186,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
                 }
                 return result;
             }
-        }, Color.DARK_GRAY, 0);
+        }, Color.DARK_GRAY, 10);
 
         plot.display();
     }
@@ -186,7 +202,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     private void buildSchedule() {
 
         getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
-        getSchedule().scheduleActionAtInterval(plotResolution, plot, "step", Schedule.LAST);
+//        getSchedule().scheduleActionAtInterval(plotResolution, plot, "step", Schedule.LAST);
     }
 
     public int getSpaceSize() {

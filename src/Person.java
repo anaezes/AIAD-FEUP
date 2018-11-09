@@ -6,6 +6,7 @@ import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -25,13 +26,19 @@ public class Person extends Agent implements Drawable {
     private Integer neighbourCount;
     private jade.core.AID world;
 
-    public Person(Double ptr, Colour colour, Boolean cooperateWithSame, Boolean cooperateWithDifferent, Point location) {
+    private HashSet<String> isBad;
+
+    private boolean smartChoice;
+
+    public Person(Double ptr, Colour colour, Boolean cooperateWithSame, Boolean cooperateWithDifferent, Point location, boolean smartChoice) {
         this.ptr = ptr;
         this.colour = colour;
         this.cooperateWithSame = cooperateWithSame;
         this.cooperateWithDifferent = cooperateWithDifferent;
         this.location = location;
         this.id = UUID.randomUUID();
+        this.isBad = new HashSet<>();
+        this.smartChoice = smartChoice;
     }
 
     public UUID getId() {
@@ -105,7 +112,7 @@ public class Person extends Agent implements Drawable {
             cooperateWithDifferent = !cooperateWithDifferent;
         }
 
-        return new Person(null, colour, cooperateWithSame, cooperateWithDifferent, null);
+        return new Person(null, colour, cooperateWithSame, cooperateWithDifferent, null, smartChoice);
     }
 
     @Override
@@ -161,6 +168,14 @@ public class Person extends Agent implements Drawable {
         this.setPtr(this.ptr + INCREASE_VALUE_PTR);
     }
 
+    public boolean isSmartChoice() {
+        return smartChoice;
+    }
+
+    public void setSmartChoice(boolean smartChoice) {
+        this.smartChoice = smartChoice;
+    }
+
     private void sendResponse(ACLMessage message, boolean collaborate) {
         ACLMessage response = message.createReply();
 
@@ -180,7 +195,11 @@ public class Person extends Agent implements Drawable {
         this.send(response);
     }
 
-    private boolean studyProposal(String content) {
+    private boolean studyProposal(String content, String sender) {
+        if (smartChoice && isBad.contains(sender)) {
+            return false;
+        }
+
         //System.out.println("colour cmp: "+colour.toString().equals(content));
         if (cooperateWithSame && colour.toString().equals(content)) {
             return true;
@@ -223,7 +242,7 @@ public class Person extends Agent implements Drawable {
                     proposeNeighbours(message.getContent().split(","));
                     break;
                 case ACLMessage.PROPOSE:
-                    boolean cooperation = studyProposal(message.getContent());
+                    boolean cooperation = studyProposal(message.getContent(), message.getSender().getName());
                     sendResponse(message, cooperation);
                     break;
                 case ACLMessage.ACCEPT_PROPOSAL:
@@ -233,13 +252,14 @@ public class Person extends Agent implements Drawable {
                     break;
                 case ACLMessage.REJECT_PROPOSAL:
                     //System.out.println("Receive REJECT_PROPOSAL!\n");
+                    isBad.add(message.getSender().getName());
                     neighbourCount--;
                     break;
                 default:
                     //do nothing
             }
 
-            //System.out.println("neighbourCount: " + neighbourCount);
+            //System.out.println(getName() + ": " + neighbourCount);
             if (neighbourCount.equals(0)) {
                 //System.out.println("sending response to world");
                 ACLMessage reply = new ACLMessage(ACLMessage.INFORM);

@@ -1,9 +1,8 @@
 import jade.lang.acl.ACLMessage;
 import jade.wrapper.StaleProxyException;
 import sajas.core.Agent;
-import sajas.core.behaviours.Behaviour;
 import sajas.core.behaviours.CyclicBehaviour;
-import sajas.wrapper.ContainerController;
+import uchicago.src.sim.analysis.OpenSequenceGraph;
 import uchicago.src.sim.space.Object2DTorus;
 
 import java.awt.*;
@@ -32,24 +31,8 @@ public class World extends Agent {
     private Integer sentMsgNo = 0;
     private WorldState state = WorldState.IMMIGRATION;
     private Integer receivedMsgNo = 0;
-
-
-    public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, ContainerController mainContainer) {
-        this(agentsList, space, random, 50, 50);
-    }
-
-    public World(ArrayList<Person> agentsList,
-                 Object2DTorus space,
-                 Random random,
-                 Integer length,
-                 Integer width) {
-        this(agentsList, space, random, length, width, 0.12, 0.1,
-                0.05,
-                1,
-                0.5,
-                0.5,
-                0);
-    }
+    private OpenSequenceGraph plot;
+    private boolean smartChoice;
 
     public World(ArrayList<Person> agentsList,
                  Object2DTorus space,
@@ -62,7 +45,9 @@ public class World extends Agent {
                  Integer immigrantsPerDay,
                  Double immigrantChanceCooperateWithSame,
                  Double immigrantChanceCooperateWithDifferent,
-                 int tickDelay) {
+                 int tickDelay,
+                 boolean smartChoice,
+                 OpenSequenceGraph plot) {
         this.tickDelay = tickDelay;
         this.agentsList = agentsList;
         this.space = space;
@@ -76,6 +61,8 @@ public class World extends Agent {
         this.immigrantsPerDay = immigrantsPerDay;
         this.immigrantChanceCooperateWithSame = immigrantChanceCooperateWithSame;
         this.immigrantChanceCooperateWithDifferent = immigrantChanceCooperateWithDifferent;
+        this.plot = plot;
+        this.smartChoice = smartChoice;
     }
 
     Person getPerson(Point point) {
@@ -166,7 +153,7 @@ public class World extends Agent {
             cooperateWithDifferent = true;
         }
 
-        return new Person(initialPtr, colour, cooperateWithSame, cooperateWithDifferent, null);
+        return new Person(initialPtr, colour, cooperateWithSame, cooperateWithDifferent, null, smartChoice);
     }
 
     public ArrayList<Person> getRandomPopulation() {
@@ -352,6 +339,14 @@ public class World extends Agent {
                         doInteraction();
                         state = WorldState.WAITING;
                         break;
+                    case WAITING:
+                        //System.out.println("Received msg no: " + receivedMsgNo);
+                        //System.out.println("Sent msg no: " + sentMsgNo);
+                        receiveMessages();
+                        if (receivedMsgNo.equals(sentMsgNo)) {
+                            state = WorldState.REPRODUCTION;
+                        }
+                        break;
                     case REPRODUCTION:
                         doReproduction();
                         state = WorldState.CULLING;
@@ -361,26 +356,29 @@ public class World extends Agent {
                         receivedMsgNo = 0;
                         sentMsgNo = 0;
                         state = WorldState.IMMIGRATION;
+                        plot.step();
                         break;
-                    case WAITING:
-                        //System.out.println("Received msg no: " + receivedMsgNo);
-                        //System.out.println("Sent msg no: " + sentMsgNo);
-                        receiveMessages();
-                        if(receivedMsgNo.equals(sentMsgNo)){
-                            state = WorldState.REPRODUCTION;
-                        }
-                        break;
-                        default:
-                            //do nothing
+                    default:
+                        // do nothing
                 }
             }
         });
         System.out.println(getLocalName() + ": starting to work!");
     }
 
+    public boolean isSmartChoice() {
+        return smartChoice;
+    }
+
+    public void setSmartChoice(boolean smartChoice) {
+        this.smartChoice = smartChoice;
+        for (Person p : agentsList) {
+            p.setSmartChoice(smartChoice);
+        }
+    }
+
     private void receiveMessages() {
-        ACLMessage msg;
-        while ((msg = receive())!= null){
+        while (receive() != null) {
             receivedMsgNo++;
             //System.out.println("World Received " + msg.getContent());
         }
@@ -428,30 +426,5 @@ public class World extends Agent {
 
     public void setTickDelay(Integer tickDelay) {
         this.tickDelay = tickDelay;
-    }
-
-    class WorkingBehaviour extends Behaviour {
-        private int n = 0;
-
-        public void action() {
-            //System.out.println(++n + " I am doing something!");
-            tick();
-            /*System.out.println("This is the world state");
-            for (Point person: terrain.keySet()){
-                String key = person.toString();
-                String value = terrain.get(person).toString();
-                System.out.println(key + " " + value);
-            }*/
-
-            try {
-                Thread.sleep(tickDelay);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public boolean done() {
-            return false;
-        }
     }
 }
