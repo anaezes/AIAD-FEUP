@@ -2,6 +2,7 @@ import jade.lang.acl.ACLMessage;
 import jade.wrapper.StaleProxyException;
 import sajas.core.Agent;
 import sajas.core.behaviours.Behaviour;
+import sajas.core.behaviours.CyclicBehaviour;
 import sajas.wrapper.ContainerController;
 import uchicago.src.sim.space.Object2DTorus;
 
@@ -28,6 +29,10 @@ public class World extends Agent {
     private Double deathRate;
     private Integer tickDelay;
     private Random random;
+    private Integer sentMsgNo = 0;
+    private WorldState state = WorldState.IMMIGRATION;
+    private Integer receivedMsgNo = 0;
+
 
     public World(ArrayList<Person> agentsList, Object2DTorus space, Random random, ContainerController mainContainer) {
         this(agentsList, space, random, 50, 50);
@@ -177,23 +182,27 @@ public class World extends Agent {
     }
 
     public void tick() {
-        // Stage 1: place immigrants
-        for (int i = 0; i < immigrantsPerDay; i++) {
-            putImmigrant();
-        }
+        doImmigration();
+        doInteraction();
+        doReproduction();
+        doCulling();
+    }
 
-        // Stage 2: Help others (or not)
-        Collections.shuffle(agentsList, random);
-        for (int i = 0; i < agentsList.size(); i++) {
-            Person person = agentsList.get(i);
-            ArrayList<Person> neighbours = getNeighbours(person.getLocation());
-            if (neighbours.isEmpty()) {
-                continue;
+    private void doCulling() {
+        // Stage 4: Die :-(
+        ArrayList<Person> tempDeath = new ArrayList<>();
+        for (Person person : agentsList) {
+            if (random.nextDouble() < deathRate) {
+                killPerson(person); // rest in peace sweet prince
+                tempDeath.add(person);
             }
-            this.sendMessageToPerson(person, neighbours);
-            //waitForReply();
         }
+        for (Person p : tempDeath) {
+            agentsList.remove(p);
+        }
+    }
 
+    private void doReproduction() {
         // Stage 3: Reproduce
         Collections.shuffle(agentsList, random);
         ArrayList<Person> tempReproduce = new ArrayList<>();
@@ -218,17 +227,28 @@ public class World extends Agent {
                 }
             }
         }
+    }
 
-        // Stage 4: Die :-(
-        ArrayList<Person> tempDeath = new ArrayList<>();
-        for (Person person : agentsList) {
-            if (random.nextDouble() < deathRate) {
-                killPerson(person); // rest in peace sweet prince
-                tempDeath.add(person);
+    private void doInteraction() {
+        // Stage 2: Help others (or not)
+        sentMsgNo = 0;
+        Collections.shuffle(agentsList, random);
+        for (int i = 0; i < agentsList.size(); i++) {
+            Person person = agentsList.get(i);
+            ArrayList<Person> neighbours = getNeighbours(person.getLocation());
+            if (neighbours.isEmpty()) {
+                continue;
             }
+            this.sendMessageToPerson(person, neighbours);
+            sentMsgNo++;
+            //waitForReply();
         }
-        for (Person p : tempDeath) {
-            agentsList.remove(p);
+    }
+
+    private void doImmigration() {
+        // Stage 1: place immigrants
+        for (int i = 0; i < immigrantsPerDay; i++) {
+            putImmigrant();
         }
     }
 
@@ -247,6 +267,8 @@ public class World extends Agent {
         message.addReplyTo(getAID());
 
         this.send(message);
+
+
     }
 
     private void waitForReply() {
@@ -317,8 +339,51 @@ public class World extends Agent {
     }
 
     public void setup() {
-        addBehaviour(new WorkingBehaviour());
+        //addBehaviour(new WorkingBehaviour());
+        addBehaviour(new CyclicBehaviour() {
+            @Override
+            public void action() {
+                switch (state){
+                    case IMMIGRATION:
+                        doImmigration();
+                        state = WorldState.INTERACTION;
+                        break;
+                    case INTERACTION:
+                        doInteraction();
+                        state = WorldState.WAITING;
+                        break;
+                    case REPRODUCTION:
+                        doReproduction();
+                        state = WorldState.CULLING;
+                        break;
+                    case CULLING:
+                        doCulling();
+                        receivedMsgNo = 0;
+                        sentMsgNo = 0;
+                        state = WorldState.IMMIGRATION;
+                        break;
+                    case WAITING:
+                        //System.out.println("Received msg no: " + receivedMsgNo);
+                        //System.out.println("Sent msg no: " + sentMsgNo);
+                        receiveMessages();
+                        if(receivedMsgNo.equals(sentMsgNo)){
+                            state = WorldState.REPRODUCTION;
+                        }
+                        break;
+                        default:
+                            //do nothing
+                }
+            }
+        });
         System.out.println(getLocalName() + ": starting to work!");
+    }
+
+    private void receiveMessages() {
+        ACLMessage msg;
+        while ((msg = receive())!= null){
+            receivedMsgNo++;
+            //System.out.println("World Received " + msg.getContent());
+        }
     }
 
     public void takeDown() {
@@ -377,6 +442,7 @@ public class World extends Agent {
                 String value = terrain.get(person).toString();
                 System.out.println(key + " " + value);
             }*/
+
             try {
                 Thread.sleep(tickDelay);
             } catch (InterruptedException e) {

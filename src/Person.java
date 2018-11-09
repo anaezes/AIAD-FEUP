@@ -23,7 +23,7 @@ public class Person extends Agent implements Drawable {
     private UUID id;
 
     private Integer neighbourCount;
-    private String world;
+    private jade.core.AID world;
 
     public Person(Double ptr, Colour colour, Boolean cooperateWithSame, Boolean cooperateWithDifferent, Point location) {
         this.ptr = ptr;
@@ -171,16 +171,17 @@ public class Person extends Agent implements Drawable {
             response.setPerformative(ACLMessage.REJECT_PROPOSAL);
         }
 
-        System.out.println(getName() + ": " + message.getSender().getName() + " proposed.");
+        /*System.out.println(getName() + ": " + message.getSender().getName() + " proposed.");
         System.out.println("my colour: " + colour + " their colour: " + message.getContent());
         System.out.println("help same: " + cooperateWithSame + " help others: " + cooperateWithDifferent);
-        System.out.println("decision: " + collaborate);
+        System.out.println("decision: " + collaborate);*/
 
         response.addReplyTo(this.getAID());
         this.send(response);
     }
 
     private boolean studyProposal(String content) {
+        //System.out.println("colour cmp: "+colour.toString().equals(content));
         if (cooperateWithSame && colour.toString().equals(content)) {
             return true;
         }
@@ -196,7 +197,7 @@ public class Person extends Agent implements Drawable {
         neighbourCount = neighbours.length;
         for (int i = 0; i < neighbours.length; i++) {
             final AID r = new AID(neighbours[i], true);
-            System.out.println(getName() + ": neighbour " + r.getName());
+            //System.out.println(getName() + ": neighbour " + r.getName());
             ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
             message.addReceiver(r);
             message.setContent(colour.toString());
@@ -218,7 +219,7 @@ public class Person extends Agent implements Drawable {
 
             switch (type) {
                 case ACLMessage.INFORM:
-                    world = message.getSender().getName();
+                    world = message.getSender();
                     proposeNeighbours(message.getContent().split(","));
                     break;
                 case ACLMessage.PROPOSE:
@@ -226,22 +227,25 @@ public class Person extends Agent implements Drawable {
                     sendResponse(message, cooperation);
                     break;
                 case ACLMessage.ACCEPT_PROPOSAL:
-                    System.out.println("Receive ACCEPT_PROPOSAL!\n");
+                    //System.out.println("Receive ACCEPT_PROPOSAL!\n");
                     processAcceptProposal();
                     neighbourCount--;
                     break;
                 case ACLMessage.REJECT_PROPOSAL:
-                    System.out.println("Receive REJECT_PROPOSAL!\n");
+                    //System.out.println("Receive REJECT_PROPOSAL!\n");
                     neighbourCount--;
                     break;
                 default:
                     //do nothing
             }
 
+            //System.out.println("neighbourCount: " + neighbourCount);
             if (neighbourCount.equals(0)) {
+                //System.out.println("sending response to world");
                 ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
-                reply.addReceiver(new AID(world, true));
-                send(message);
+                reply.addReceiver(world);
+                reply.setContent("person ID"+getName());
+                send(reply);
             }
         }
 
