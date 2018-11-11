@@ -109,8 +109,8 @@ public class World extends Agent {
     public void putImmigrant() {
         Person immigrant = randomPerson();
 
-        Integer x = random.nextInt(length);
-        Integer y = random.nextInt(width);
+        int x = random.nextInt(length);
+        int y = random.nextInt(width);
         Point point = new Point(x, y);
         while (getPerson(point) != null) {
             x = random.nextInt(length);
@@ -220,15 +220,13 @@ public class World extends Agent {
         // Stage 2: Help others (or not)
         sentMsgNo = 0;
         Collections.shuffle(agentsList, random);
-        for (int i = 0; i < agentsList.size(); i++) {
-            Person person = agentsList.get(i);
+        for (Person person : agentsList) {
             ArrayList<Person> neighbours = getNeighbours(person.getLocation());
             if (neighbours.isEmpty()) {
                 continue;
             }
             this.sendMessageToPerson(person, neighbours);
             sentMsgNo++;
-            //waitForReply();
         }
     }
 
@@ -246,8 +244,8 @@ public class World extends Agent {
         message.addReceiver(person.getAID());
 
         StringBuilder content = new StringBuilder();
-        for (int i = 0; i < neighbours.size(); i++) {
-            content.append(neighbours.get(i).getName()).append(",");
+        for (Person neighbour : neighbours) {
+            content.append(neighbour.getName()).append(",");
         }
         message.setContent(content.toString());
 
@@ -256,15 +254,6 @@ public class World extends Agent {
         this.send(message);
 
 
-    }
-
-    private void waitForReply() {
-        ACLMessage message = null;
-
-        while (message == null) {
-            message = receive();
-            System.out.println("still waiting");
-        }
     }
 
     private ArrayList<Point> getNeighboursPositions(Point location) {
@@ -326,7 +315,6 @@ public class World extends Agent {
     }
 
     public void setup() {
-        //addBehaviour(new WorkingBehaviour());
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {

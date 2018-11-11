@@ -205,17 +205,14 @@ public class Person extends Agent implements Drawable {
             return true;
         }
 
-        if (cooperateWithDifferent && !colour.toString().equals(content)) {
-            return true;
-        }
+        return cooperateWithDifferent && !colour.toString().equals(content);
 
-        return false;
     }
 
     private void proposeNeighbours(String[] neighbours) {
         neighbourCount = neighbours.length;
-        for (int i = 0; i < neighbours.length; i++) {
-            final AID r = new AID(neighbours[i], true);
+        for (String neighbour : neighbours) {
+            final AID r = new AID(neighbour, true);
             //System.out.println(getName() + ": neighbour " + r.getName());
             ACLMessage message = new ACLMessage(ACLMessage.PROPOSE);
             message.addReceiver(r);
