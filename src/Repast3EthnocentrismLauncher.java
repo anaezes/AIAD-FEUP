@@ -5,7 +5,6 @@ import sajas.core.Runtime;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
 import uchicago.src.sim.analysis.OpenSequenceGraph;
-import uchicago.src.sim.analysis.Sequence;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
@@ -39,16 +38,6 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         Runtime rt = Runtime.instance();
         Profile p1 = new ProfileImpl();
         mainContainer = rt.createMainContainer(p1);
-        try {
-            launchAgents();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void launchAgents() throws StaleProxyException {
-        //mainContainer.acceptNewAgent("world",new World(agentList,space,random));
-        // TODO: 31/10/2018 launch necessary agents
     }
 
     @Override
@@ -149,54 +138,46 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         plot.setAxisTitles("World cycles", "# of people");
 
         // plot number of people that coopSame and coopDiff
-        plot.addSequence("Green - CC", new Sequence() {
-            public double getSValue() {
-                int result = 0;
-                for (Person p : agentList) {
-                    if (p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
-                        result++;
-                    }
+        plot.addSequence("Green - CC", () -> {
+            int result = 0;
+            for (Person p : agentList) {
+                if (p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
+                    result++;
                 }
-                return result;
             }
+            return result;
         }, Color.GREEN, 10);
         // plot number of people that coopSame and !coopDiff
-        plot.addSequence("Red - CD", new Sequence() {
-            public double getSValue() {
-                int result = 0;
-                for (Person p : agentList) {
-                    if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
-                        result++;
-                    }
+        plot.addSequence("Red - CD", () -> {
+            int result = 0;
+            for (Person p : agentList) {
+                if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
+                    result++;
                 }
-                return result;
             }
+            return result;
         }, Color.RED, 10);
 
         // plot number of people that !coopSame and coopDiff
-        plot.addSequence("Orange - DC", new Sequence() {
-            public double getSValue() {
-                int result = 0;
-                for (Person p : agentList) {
-                    if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
-                        result++;
-                    }
+        plot.addSequence("Orange - DC", () -> {
+            int result = 0;
+            for (Person p : agentList) {
+                if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
+                    result++;
                 }
-                return result;
             }
+            return result;
         }, Color.ORANGE, 10);
 
         // plot number of people that !coopSame and !coopDiff
-        plot.addSequence("Gray - DD", new Sequence() {
-            public double getSValue() {
-                int result = 0;
-                for (Person p : agentList) {
-                    if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
-                        result++;
-                    }
+        plot.addSequence("Gray - DD", () -> {
+            int result = 0;
+            for (Person p : agentList) {
+                if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
+                    result++;
                 }
-                return result;
             }
+            return result;
         }, Color.DARK_GRAY, 10);
 
         plot.display();
