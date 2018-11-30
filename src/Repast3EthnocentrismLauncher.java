@@ -36,7 +36,6 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     @Override
     protected void launchJADE() {
-        random = new Random(this.getRngSeed());
         Runtime rt = Runtime.instance();
         Profile p1 = new ProfileImpl();
         mainContainer = rt.createMainContainer(p1);
@@ -85,16 +84,28 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     @Override
     public void setup() {
+        this.random = new Random(this.getRngSeed());
+        double varDouble;
         super.setup();
         setSpaceSize(50);
         setDeathRate(0.1);
-        setImmigrantChanceCooperateWithDifferent(0.5);
-        setImmigrantChanceCooperateWithSame(0.5);
+        varDouble = this.random.nextDouble(); // DEFAULT -> 0.5
+        System.out.println("coop with diff = "+varDouble);
+        setImmigrantChanceCooperateWithDifferent(varDouble);
+        varDouble = this.random.nextDouble(); // DEFAULT -> 0.5
+        System.out.println("coop with same = "+varDouble);
+        setImmigrantChanceCooperateWithSame(varDouble);
         setImmigrantsPerDay(1);
-        setInitialPtr(0.12);
-        setMutationRate(0.005);
+        varDouble = this.random.nextDouble()*(0.2-0.04) + 0.04; //number between 0.2 and 0.04 DEFAULT -> 0.12
+        System.out.println("PTR = "+varDouble);
+        setInitialPtr(varDouble);
+        varDouble = this.random.nextDouble()*0.01; //number between 0.01 and 0 DEFAULT -> 0.005
+        System.out.println("Mutation = "+varDouble);
+        setMutationRate(varDouble);
         setTickDelay(0);
-        setSmartChoice(true);
+        varDouble = this.random.nextDouble();
+        System.out.println("SmartChoice= "+(varDouble>=0.5));
+        setSmartChoice(varDouble>=0.5);
         plotResolution = 10;
         if (dsurf != null) dsurf.dispose();
         dsurf = new DisplaySurface(this, "World Display");
@@ -202,7 +213,31 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     private void buildSchedule() {
 
         getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+        getSchedule().scheduleActionAt(1000,this,"stop");
+        //getSchedule().scheduleActionAtInterval(1000,this,"stop");
+        //this.generateNewSeed();
+        getSchedule().scheduleActionAtEnd(this,"actionPause");
+        //getSchedule().scheduleActionAt(1000, this ,"pause", Schedule.LAST);
+        // getSchedule().scheduleActionAt(1000,)
 //        getSchedule().scheduleActionAtInterval(plotResolution, plot, "step", Schedule.LAST);
+    }
+
+    public void actionPause() {
+        //System.out.println("working fine");
+        //this.plot.setSnapshotFileName("test1");
+        this.plot.writeToFile();
+        //this.clearSpace();
+        //this.agentList.clear();
+        //this.world.reset();
+        //this.dsurf.removeAll();
+        //System.out.println(this.plot.toString());
+    }
+
+    public void clearSpace(){
+        for (int i = 0; i < agentList.size(); i++) {
+            this.space.putObjectAt(agentList.get(i).getX(),agentList.get(i).getY(),null);
+        }
+        this.world.space = this.space;
     }
 
     public int getSpaceSize() {

@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class World extends Agent {
 
-    private Object2DTorus space;
-    private ArrayList<Person> agentsList;
+    protected Object2DTorus space;
+    protected ArrayList<Person> agentsList;
     private ConcurrentHashMap<Point, Person> terrain;
     private Integer length;
     private Integer width;
@@ -169,10 +169,15 @@ public class World extends Agent {
     }
 
     public void tick() {
+        System.out.println("tick");
         doImmigration();
         doInteraction();
         doReproduction();
         doCulling();
+    }
+
+    protected void reset(){
+        this.state = WorldState.IMMIGRATION;
     }
 
     private void doCulling() {
@@ -234,8 +239,14 @@ public class World extends Agent {
 
     private void doImmigration() {
         // Stage 1: place immigrants
-        for (int i = 0; i < immigrantsPerDay; i++) {
-            putImmigrant();
+        if(agentsList.size()==0){
+            for (int i = 0; i < 2500; i++) {
+                putImmigrant();
+            }
+        }else{
+            for (int i = 0; i < immigrantsPerDay; i++) {
+                putImmigrant();
+            }
         }
     }
 
@@ -330,6 +341,7 @@ public class World extends Agent {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
+                System.out.println("ACTION: "+agentsList.size());
                 switch (state){
                     case IMMIGRATION:
                         doImmigration();
@@ -343,7 +355,7 @@ public class World extends Agent {
                         //System.out.println("Received msg no: " + receivedMsgNo);
                         //System.out.println("Sent msg no: " + sentMsgNo);
                         receiveMessages();
-                        if (receivedMsgNo.equals(sentMsgNo)) {
+                        if (receivedMsgNo >= sentMsgNo) {
                             state = WorldState.REPRODUCTION;
                         }
                         break;
