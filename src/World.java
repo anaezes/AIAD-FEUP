@@ -329,7 +329,6 @@ public class World extends Agent {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                System.out.println("ACTION: "+agentsList.size());
                 switch (state){
                     case IMMIGRATION:
                         doImmigration();
