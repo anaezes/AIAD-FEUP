@@ -169,7 +169,7 @@ public class World extends Agent {
     }
 
     public void tick() {
-        System.out.println("tick");
+        //System.out.println("tick");
         doImmigration();
         doInteraction();
         doReproduction();

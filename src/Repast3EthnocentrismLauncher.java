@@ -79,21 +79,21 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         setSpaceSize(50);
         setDeathRate(0.1);
         varDouble = this.random.nextDouble(); // DEFAULT -> 0.5
-        System.out.println("coop with diff = "+varDouble);
+        //System.out.println("coop with diff = "+varDouble);
         setImmigrantChanceCooperateWithDifferent(varDouble);
         varDouble = this.random.nextDouble(); // DEFAULT -> 0.5
-        System.out.println("coop with same = "+varDouble);
+        //System.out.println("coop with same = "+varDouble);
         setImmigrantChanceCooperateWithSame(varDouble);
         setImmigrantsPerDay(1);
         varDouble = this.random.nextDouble()*(0.2-0.04) + 0.04; //number between 0.2 and 0.04 DEFAULT -> 0.12
-        System.out.println("PTR = "+varDouble);
+//        System.out.println("PTR = "+varDouble);
         setInitialPtr(varDouble);
         varDouble = this.random.nextDouble()*0.01; //number between 0.01 and 0 DEFAULT -> 0.005
-        System.out.println("Mutation = "+varDouble);
+//        System.out.println("Mutation = "+varDouble);
         setMutationRate(varDouble);
         setTickDelay(0);
         varDouble = this.random.nextDouble();
-        System.out.println("SmartChoice= "+(varDouble>=0.5));
+//        System.out.println("SmartChoice= "+(varDouble>=0.5));
         setSmartChoice(varDouble>=0.5);
         plotResolution = 10;
         if (dsurf != null) dsurf.dispose();
@@ -185,15 +185,15 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     private void buildDisplay() {
         // space and display surface
-        Object2DDisplay display = new Object2DDisplay(space);
-        display.setObjectList(agentList);
-        dsurf.addDisplayableProbeable(display, "Agents Space");
-        dsurf.display();
+        //Object2DDisplay display = new Object2DDisplay(space);
+        //display.setObjectList(agentList);
+        //dsurf.addDisplayableProbeable(display, "Agents Space");
+        //dsurf.display();
     }
 
     private void buildSchedule() {
 
-        getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+        //getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
         getSchedule().scheduleActionAt(1000,this,"stop");
         //getSchedule().scheduleActionAtInterval(1000,this,"stop");
         //this.generateNewSeed();
