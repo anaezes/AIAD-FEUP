@@ -82,13 +82,12 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         pw.println("ImmigrantChanceCooperateWithDifferent, ImmigrantChanceCooperateWithSame, InitialPtr, MutationRate, SmartChoice, CC, CD, DC, DD, OneNeighbour, TwoNeighbours, ThreeNeighbours, FourNeighbours, Delta");
     }
 
-    public void printPopulations() {
-        pw.printf(", %d, %d, %d, %d", getCCCount(), getCDCount(), getDCCount(), getDDCount());
+    public void printInitialData() {
         int[] sameColourNeighboursCount = getSameColourNeighboursCount();
-        pw.printf(", %d, %d, %d, %d", sameColourNeighboursCount[0], sameColourNeighboursCount[1], sameColourNeighboursCount[2], sameColourNeighboursCount[3]);
+        pw.printf("%f, %f, %f, %f, %b, %d, %d, %d, %d, %d, %d, %d, %d", getImmigrantChanceCooperateWithDifferent(), getImmigrantChanceCooperateWithSame(), getInitialPtr(), getMutationRate(), isSmartChoice(), getCCCount(), getCDCount(), getDCCount(), getDDCount(), sameColourNeighboursCount[0], sameColourNeighboursCount[1], sameColourNeighboursCount[2], sameColourNeighboursCount[3]);
     }
 
-    public void printDelta() {
+    public void printDeltaAndEnd() {
         pw.println(", " + (getCCCount() - getCDCount()));
         this.stop();
     }
@@ -103,17 +102,12 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         setSpaceSize(50);
         setDeathRate(0.1);
         setImmigrantChanceCooperateWithDifferent(this.random.nextDouble()); // DEFAULT -> 0.5
-        pw.print(getImmigrantChanceCooperateWithDifferent());
         setImmigrantChanceCooperateWithSame(this.random.nextDouble()); // DEFAULT -> 0.5
-        pw.print(", " + getImmigrantChanceCooperateWithSame());
         setImmigrantsPerDay(1);
         setInitialPtr(this.random.nextDouble() * (0.2 - 0.04) + 0.04); // number between 0.2 and 0.04 DEFAULT -> 0.12
-        pw.print(", " + getInitialPtr());
         setMutationRate(this.random.nextDouble() * 0.01); // number between 0.01 and 0 DEFAULT -> 0.005
-        pw.print(", " + getMutationRate());
         setTickDelay(0);
         setSmartChoice(this.random.nextDouble() >= 0.5);
-        pw.print(", " + isSmartChoice());
         plotResolution = 10;
     }
 
@@ -232,10 +226,10 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
 
     private void buildSchedule() {
 //        getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
-        getSchedule().scheduleActionAt(1000, this, "printDelta");
+        getSchedule().scheduleActionAt(2, this, "printInitialData", Schedule.LAST);
+        getSchedule().scheduleActionAt(1000, this, "printDeltaAndEnd");
 //        this.generateNewSeed();
 //        getSchedule().scheduleActionAtEnd(this, "actionPause");
-        getSchedule().scheduleActionAt(2, this, "printPopulations", Schedule.LAST);
 //        getSchedule().scheduleActionAtInterval(plotResolution, plot, "step", Schedule.LAST);
     }
 
