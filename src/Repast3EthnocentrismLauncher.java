@@ -74,17 +74,49 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     }
 
     private void setPrintWriter() {
+        File data = new File("data.csv");
+        boolean printHeaders = !data.isFile();
         try {
-            pw = new PrintWriter(new BufferedOutputStream(new FileOutputStream("data.csv")), true);
+            pw = new PrintWriter(new BufferedOutputStream(new FileOutputStream(data, true)), true);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        pw.println("ImmigrantChanceCooperateWithDifferent, ImmigrantChanceCooperateWithSame, InitialPtr, MutationRate, SmartChoice, CC, CD, DC, DD, OneNeighbour, TwoNeighbours, ThreeNeighbours, FourNeighbours, Delta");
+        if (printHeaders) {
+            pw.println("ImmigrantChanceCooperateWithDifferent, " +
+                    "ImmigrantChanceCooperateWithSame, " +
+                    "InitialPtr, " +
+                    "MutationRate, " +
+                    "SmartChoice, " +
+                    "CC, " +
+                    "CD, " +
+                    "DC, " +
+                    "DD, " +
+                    "OneNeighbour, " +
+                    "TwoNeighbours, " +
+                    "ThreeNeighbours, " +
+                    "FourNeighbours, " +
+                    "Delta"
+            );
+        }
     }
 
     public void printInitialData() {
         int[] sameColourNeighboursCount = getSameColourNeighboursCount();
-        pw.printf("%f, %f, %f, %f, %b, %d, %d, %d, %d, %d, %d, %d, %d", getImmigrantChanceCooperateWithDifferent(), getImmigrantChanceCooperateWithSame(), getInitialPtr(), getMutationRate(), isSmartChoice(), getCCCount(), getCDCount(), getDCCount(), getDDCount(), sameColourNeighboursCount[0], sameColourNeighboursCount[1], sameColourNeighboursCount[2], sameColourNeighboursCount[3]);
+        pw.printf("%f, %f, %f, %f, %b, %d, %d, %d, %d, %d, %d, %d, %d",
+                getImmigrantChanceCooperateWithDifferent(),
+                getImmigrantChanceCooperateWithSame(),
+                getInitialPtr(),
+                getMutationRate(),
+                isSmartChoice(),
+                getCCCount(),
+                getCDCount(),
+                getDCCount(),
+                getDDCount(),
+                sameColourNeighboursCount[0],
+                sameColourNeighboursCount[1],
+                sameColourNeighboursCount[2],
+                sameColourNeighboursCount[3]
+        );
     }
 
     public void printDeltaAndEnd() {
