@@ -76,7 +76,7 @@ public class World extends Agent {
 
     public void putPerson(Person person) throws StaleProxyException {
         this.getContainerController().acceptNewAgent("person-" + person.getId(), person).start();
-        space.putObjectAt(person.getX(),person.getY(), person);
+        space.putObjectAt(person.getX(), person.getY(), person);
     }
 
     public ArrayList<Person> getNeighbours(Point point) {
@@ -176,7 +176,7 @@ public class World extends Agent {
         doCulling();
     }
 
-    protected void reset(){
+    protected void reset() {
         this.state = WorldState.IMMIGRATION;
     }
 
@@ -237,11 +237,11 @@ public class World extends Agent {
 
     private void doImmigration() {
         // Stage 1: place immigrants
-        if(agentsList.size()==0){
+        if (agentsList.size() == 0) {
             for (int i = 0; i < 2500; i++) {
                 putImmigrant();
             }
-        }else{
+        } else {
             for (int i = 0; i < immigrantsPerDay; i++) {
                 putImmigrant();
             }
@@ -329,7 +329,7 @@ public class World extends Agent {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                switch (state){
+                switch (state) {
                     case IMMIGRATION:
                         doImmigration();
                         state = WorldState.INTERACTION;

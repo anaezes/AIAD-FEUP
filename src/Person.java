@@ -41,6 +41,10 @@ public class Person extends Agent implements Drawable {
         this.smartChoice = smartChoice;
     }
 
+    public Colour getColour() {
+        return colour;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -261,7 +265,7 @@ public class Person extends Agent implements Drawable {
                 //System.out.println("sending response to world");
                 ACLMessage reply = new ACLMessage(ACLMessage.INFORM);
                 reply.addReceiver(world);
-                reply.setContent("person ID"+getName());
+                reply.setContent("person ID" + getName());
                 send(reply);
             }
         }

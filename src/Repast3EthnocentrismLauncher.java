@@ -11,6 +11,7 @@ import uchicago.src.sim.gui.Object2DDisplay;
 import uchicago.src.sim.space.Object2DTorus;
 
 import java.awt.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -32,6 +33,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     private OpenSequenceGraph plot;
     private int plotResolution;
     private boolean smartChoice;
+    private PrintWriter pw;
 
     @Override
     protected void launchJADE() {
@@ -71,41 +73,55 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         }
     }
 
+    private void setPrintWriter() {
+        try {
+            pw = new PrintWriter(new BufferedOutputStream(new FileOutputStream("data.csv")), true);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        pw.println("ImmigrantChanceCooperateWithDifferent, ImmigrantChanceCooperateWithSame, InitialPtr, MutationRate, SmartChoice, CC, CD, DC, DD, OneNeighbour, TwoNeighbours, ThreeNeighbours, FourNeighbours, Delta");
+    }
+
+    public void printPopulations() {
+        pw.printf(", %d, %d, %d, %d", getCCCount(), getCDCount(), getDCCount(), getDDCount());
+        int[] sameColourNeighboursCount = getSameColourNeighboursCount();
+        pw.printf(", %d, %d, %d, %d", sameColourNeighboursCount[0], sameColourNeighboursCount[1], sameColourNeighboursCount[2], sameColourNeighboursCount[3]);
+    }
+
+    public void printDelta() {
+        pw.println(", " + (getCCCount() - getCDCount()));
+        this.stop();
+    }
+
     @Override
     public void setup() {
+        if (pw == null) {
+            setPrintWriter();
+        }
         this.random = new Random(this.getRngSeed());
-        double varDouble;
         super.setup();
         setSpaceSize(50);
         setDeathRate(0.1);
-        varDouble = this.random.nextDouble(); // DEFAULT -> 0.5
-        //System.out.println("coop with diff = "+varDouble);
-        setImmigrantChanceCooperateWithDifferent(varDouble);
-        varDouble = this.random.nextDouble(); // DEFAULT -> 0.5
-        //System.out.println("coop with same = "+varDouble);
-        setImmigrantChanceCooperateWithSame(varDouble);
+        setImmigrantChanceCooperateWithDifferent(this.random.nextDouble()); // DEFAULT -> 0.5
+        pw.print(getImmigrantChanceCooperateWithDifferent());
+        setImmigrantChanceCooperateWithSame(this.random.nextDouble()); // DEFAULT -> 0.5
+        pw.print(", " + getImmigrantChanceCooperateWithSame());
         setImmigrantsPerDay(1);
-        varDouble = this.random.nextDouble()*(0.2-0.04) + 0.04; //number between 0.2 and 0.04 DEFAULT -> 0.12
-//        System.out.println("PTR = "+varDouble);
-        setInitialPtr(varDouble);
-        varDouble = this.random.nextDouble()*0.01; //number between 0.01 and 0 DEFAULT -> 0.005
-//        System.out.println("Mutation = "+varDouble);
-        setMutationRate(varDouble);
+        setInitialPtr(this.random.nextDouble() * (0.2 - 0.04) + 0.04); // number between 0.2 and 0.04 DEFAULT -> 0.12
+        pw.print(", " + getInitialPtr());
+        setMutationRate(this.random.nextDouble() * 0.01); // number between 0.01 and 0 DEFAULT -> 0.005
+        pw.print(", " + getMutationRate());
         setTickDelay(0);
-        varDouble = this.random.nextDouble();
-//        System.out.println("SmartChoice= "+(varDouble>=0.5));
-        setSmartChoice(varDouble>=0.5);
+        setSmartChoice(this.random.nextDouble() >= 0.5);
+        pw.print(", " + isSmartChoice());
         plotResolution = 10;
-        if (dsurf != null) dsurf.dispose();
-        dsurf = new DisplaySurface(this, "World Display");
-        registerDisplaySurface("World Display", dsurf);
     }
 
     @Override
     public void begin() {
         super.begin();
         buildModel();
-        buildDisplay();
+//        buildDisplay();
         buildSchedule();
         world = new World(agentList,
                 space,
@@ -128,6 +144,59 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         }
     }
 
+    public int[] getSameColourNeighboursCount() {
+        int[] result = new int[4];
+        for (Person p : agentList) {
+            int neighboursOfSameColour = 0;
+            for (Person n : world.getNeighbours(p.getLocation())) {
+                if (p.getColour().equals(n.getColour())) {
+                    result[neighboursOfSameColour++]++;
+                }
+            }
+        }
+        return result;
+    }
+
+    public int getCCCount() {
+        int result = 0;
+        for (Person p : agentList) {
+            if (p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    public int getCDCount() {
+        int result = 0;
+        for (Person p : agentList) {
+            if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    public int getDCCount() {
+        int result = 0;
+        for (Person p : agentList) {
+            if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    public int getDDCount() {
+        int result = 0;
+        for (Person p : agentList) {
+            if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
     public void buildModel() {
         agentList = new ArrayList<>();
         space = new Object2DTorus(spaceSize, spaceSize);
@@ -138,85 +207,52 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
         plot.setAxisTitles("World cycles", "# of people");
 
         // plot number of people that coopSame and coopDiff
-        plot.addSequence("Green - CC", () -> {
-            int result = 0;
-            for (Person p : agentList) {
-                if (p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
-                    result++;
-                }
-            }
-            return result;
-        }, Color.GREEN, 10);
+        plot.addSequence("Green - CC", this::getCCCount, Color.GREEN, 10);
         // plot number of people that coopSame and !coopDiff
-        plot.addSequence("Red - CD", () -> {
-            int result = 0;
-            for (Person p : agentList) {
-                if (p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
-                    result++;
-                }
-            }
-            return result;
-        }, Color.RED, 10);
-
+        plot.addSequence("Red - CD", this::getCDCount, Color.RED, 10);
         // plot number of people that !coopSame and coopDiff
-        plot.addSequence("Orange - DC", () -> {
-            int result = 0;
-            for (Person p : agentList) {
-                if (!p.getCooperateWithSame() && p.getCooperateWithDifferent()) {
-                    result++;
-                }
-            }
-            return result;
-        }, Color.ORANGE, 10);
-
+        plot.addSequence("Orange - DC", this::getDCCount, Color.ORANGE, 10);
         // plot number of people that !coopSame and !coopDiff
-        plot.addSequence("Gray - DD", () -> {
-            int result = 0;
-            for (Person p : agentList) {
-                if (!p.getCooperateWithSame() && !p.getCooperateWithDifferent()) {
-                    result++;
-                }
-            }
-            return result;
-        }, Color.DARK_GRAY, 10);
+        plot.addSequence("Gray - DD", this::getDDCount, Color.DARK_GRAY, 10);
 
         plot.display();
     }
 
+
     private void buildDisplay() {
+        if (dsurf != null) dsurf.dispose();
+        dsurf = new DisplaySurface(this, "World Display");
+        registerDisplaySurface("World Display", dsurf);
         // space and display surface
-        //Object2DDisplay display = new Object2DDisplay(space);
-        //display.setObjectList(agentList);
-        //dsurf.addDisplayableProbeable(display, "Agents Space");
-        //dsurf.display();
+        Object2DDisplay display = new Object2DDisplay(space);
+        display.setObjectList(agentList);
+        dsurf.addDisplayableProbeable(display, "Agents Space");
+        dsurf.display();
     }
 
     private void buildSchedule() {
-
-        //getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
-        getSchedule().scheduleActionAt(1000,this,"stop");
-        //getSchedule().scheduleActionAtInterval(1000,this,"stop");
-        //this.generateNewSeed();
-        getSchedule().scheduleActionAtEnd(this,"actionPause");
-        //getSchedule().scheduleActionAt(1000, this ,"pause", Schedule.LAST);
-        // getSchedule().scheduleActionAt(1000,)
+//        getSchedule().scheduleActionAtInterval(1, dsurf, "updateDisplay", Schedule.LAST);
+        getSchedule().scheduleActionAt(1000, this, "printDelta");
+//        this.generateNewSeed();
+//        getSchedule().scheduleActionAtEnd(this, "actionPause");
+        getSchedule().scheduleActionAt(2, this, "printPopulations", Schedule.LAST);
 //        getSchedule().scheduleActionAtInterval(plotResolution, plot, "step", Schedule.LAST);
     }
 
     public void actionPause() {
-        //System.out.println("working fine");
-        //this.plot.setSnapshotFileName("test1");
-        this.plot.writeToFile();
-        //this.clearSpace();
-        //this.agentList.clear();
-        //this.world.reset();
-        //this.dsurf.removeAll();
-        //System.out.println(this.plot.toString());
+//        System.out.println("working fine");
+//        this.plot.setSnapshotFileName("test1");
+//        this.plot.writeToFile();
+//        this.clearSpace();
+//        this.agentList.clear();
+//        this.world.reset();
+//        this.dsurf.removeAll();
+//        System.out.println(this.plot.toString());
     }
 
-    public void clearSpace(){
+    public void clearSpace() {
         for (int i = 0; i < agentList.size(); i++) {
-            this.space.putObjectAt(agentList.get(i).getX(),agentList.get(i).getY(),null);
+            this.space.putObjectAt(agentList.get(i).getX(), agentList.get(i).getY(), null);
         }
         this.world.space = this.space;
     }
