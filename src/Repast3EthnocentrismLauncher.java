@@ -121,7 +121,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     }
 
     public void printDeltaAndEnd() {
-        pw.println(", " + (getCCCount() - getCDCount()));
+        pw.printf(", %d", getCCCount() - getCDCount());
         this.stop();
     }
 
