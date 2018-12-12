@@ -82,7 +82,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
             e.printStackTrace();
         }
         if (printHeaders) {
-            pw.println("ImmigrantChanceCooperateWithDifferent, " +
+            pw.print("ImmigrantChanceCooperateWithDifferent, " +
                     "ImmigrantChanceCooperateWithSame, " +
                     "InitialPtr, " +
                     "MutationRate, " +
@@ -101,6 +101,7 @@ public class Repast3EthnocentrismLauncher extends Repast3Launcher {
     }
 
     public void printInitialData() {
+        pw.println();
         int[] sameColourNeighboursCount = getSameColourNeighboursCount();
         pw.printf("%f, %f, %f, %f, %b, %d, %d, %d, %d, %d, %d, %d, %d",
                 getImmigrantChanceCooperateWithDifferent(),
